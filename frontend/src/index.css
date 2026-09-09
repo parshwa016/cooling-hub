@@ -1,0 +1,191 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Background Grids and Luxury Textures */
+.bg-dot-grid {
+  background-image: radial-gradient(rgba(15, 41, 66, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.dark .bg-dot-grid {
+  background-image: radial-gradient(rgba(56, 189, 248, 0.1) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-aurora {
+  background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.15), transparent 45%),
+              radial-gradient(circle at 80% 80%, rgba(217, 84, 0, 0.12), transparent 45%),
+              radial-gradient(circle at 50% 50%, rgba(15, 41, 66, 0.05), transparent 60%);
+}
+
+.dark .bg-aurora {
+  background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.18), transparent 45%),
+              radial-gradient(circle at 80% 80%, rgba(217, 84, 0, 0.15), transparent 45%),
+              radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.06), transparent 60%);
+}
+
+@layer utilities {
+  .glass-luxury {
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border border-white/80 dark:border-slate-800/80 shadow-[0_8px_32px_rgba(15,41,66,0.06)] hover:shadow-[0_16px_48px_rgba(15,41,66,0.12)] transition-all duration-300;
+  }
+
+  .glow-border {
+    @apply relative before:absolute before:inset-0 before:rounded-[inherit] before:p-[1px] before:bg-gradient-to-r before:from-cyan-500/50 before:via-blue-500/30 before:to-brand-orange/40 before:-z-10 before:content-[''];
+  }
+
+  .btn-animate {
+    @apply relative overflow-hidden transition-all duration-300 transform active:scale-95 hover:-translate-y-0.5 shadow-md hover:shadow-cyan-500/25;
+  }
+
+  .btn-orange-animate {
+    @apply relative overflow-hidden transition-all duration-300 transform active:scale-95 hover:-translate-y-0.5 shadow-md hover:shadow-orange-500/30;
+  }
+
+  .shimmer-loading {
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s infinite;
+  }
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1.5deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes breezeFlow {
+  0% {
+    stroke-dashoffset: 200;
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.2;
+  }
+}
+
+@keyframes radarPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 7s ease-in-out infinite;
+}
+
+.animate-marquee {
+  display: flex;
+  width: 200%;
+  animation: marquee 25s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+.animate-radar {
+  animation: radarPulse 2s infinite;
+}
+
+.breeze-line {
+  stroke-dasharray: 60, 40;
+  animation: breezeFlow 3s linear infinite;
+}
+
+/* Metallic Sheen Effect */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%) rotate(30deg);
+  transition: transform 0.65s ease-in-out;
+}
+
+.btn-shine:hover::after {
+  transform: translateX(100%) rotate(30deg);
+}
+
+/* Scroll Progress Bar */
+#scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0F2942, #38bdf8, #D95400);
+  z-index: 100;
+  transition: width 0.1s ease-out;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
