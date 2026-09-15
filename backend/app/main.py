@@ -1,13 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os
+from fastapi.staticfiles import StaticFiles
 from app.seed_data import seed_database
-from app.routers import auth, products, calculator, services, complaints, amc, technician, orders, chatbot, admin
+from app.routers import auth, products, calculator, services, complaints, amc, technician, orders, chatbot, admin, notifications
 
 app = FastAPI(
     title="Cooling Hub API",
     description="Backend services for Cooling Hub - AC Shopping, Servicing, AMC, Complaints, AI Assistant & Analytics",
     version="2.0.0"
 )
+
+# Enable static files for uploaded product images
+static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+uploads_dir = os.path.join(static_dir, "uploads")
+os.makedirs(uploads_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Enable CORS for local Vite dev server and production clients
 app.add_middleware(
@@ -32,6 +40,7 @@ app.include_router(technician.router)
 app.include_router(orders.router)
 app.include_router(chatbot.router)
 app.include_router(admin.router)
+app.include_router(notifications.router)
 
 @app.get("/")
 def root():

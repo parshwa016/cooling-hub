@@ -1,94 +1,195 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Snowflake, ShoppingCart, Heart, MapPin, 
+  Snowflake, ShoppingCart, Heart, 
   Sun, Moon, UserCheck, Wrench, ShieldCheck, ChevronDown, 
-  Menu, X, Scale, User, Zap, AlertTriangle, Calendar
+  Menu, X, Scale, User, Zap, AlertTriangle, Calendar, LogOut,
+  Bell, CheckCheck
 } from 'lucide-react';
+import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 
+// Helper component to render letters individually for the Airflow Wave effect
+function WavyWord({ text }) {
+  return (
+    <span className="inline-flex items-center">
+      {text.split('').map((char, idx) => (
+        <span
+          key={idx}
+          className="wavy-char"
+          style={{ '--char-index': idx }}
+        >
+          {char === ' ' ? '\u00A0' : char}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
-  const { currentUser, switchRole } = useAuth();
-  const { cartItemCount, wishlist, compareItems, pincode, setPincode } = useCart();
+  const { currentUser, logout, openAuthModal, switchRole } = useAuth();
+  const { cartItemCount, compareItems } = useCart();
   const { theme, toggleTheme } = useTheme();
+  
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [editingPincode, setEditingPincode] = useState(false);
-  const [tempPin, setTempPin] = useState(pincode);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  const handlePincodeSubmit = (e) => {
-    e.preventDefault();
-    if (tempPin.length === 6) {
-      setPincode(tempPin);
-      setEditingPincode(false);
+  const navRef = React.useRef(null);
+  const [navHeight, setNavHeight] = useState(108);
+
+  const [notifications, setNotifications] = useState([]);
+  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+
+  const fetchNotifications = async () => {
+    if (!currentUser) {
+      setNotifications([]);
+      return;
+    }
+    try {
+      const data = await api.getNotifications({ user_id: currentUser.id, role: currentUser.role });
+      setNotifications(data);
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-white/95 dark:bg-slate-900/95 border-b border-slate-200/80 dark:border-slate-800 transition-colors">
-      
-      {/* Top Thin Announcement Strip */}
-      <div className="bg-brand-navy text-white text-[11px] py-1.5 px-4 text-center font-medium tracking-wide flex items-center justify-center space-x-2">
-        <span>🎉 Summer AC Offer! Get 10% OFF with code <strong className="text-brand-orange underline">COOL2026</strong> + Free Installation</span>
-      </div>
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 8000);
+    return () => clearInterval(interval);
+  }, [currentUser?.id, currentUser?.role]);
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-6">
+  const handleMarkAllNotifsRead = async () => {
+    try {
+      await api.markAllNotificationsRead({ user_id: currentUser?.id, role: currentUser?.role });
+      fetchNotifications();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleToggleNotifications = async () => {
+    const nextState = !notifDropdownOpen;
+    setNotifDropdownOpen(nextState);
+
+    // Requirement 1: Once user clicks to see notifications, the unread badge number MUST disappear
+    if (nextState && unreadCount > 0) {
+      // Optimistically clear the unread badge immediately in the UI
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      // Persist to backend so it stays read across page reloads/polls
+      try {
+        await api.markAllNotificationsRead({ user_id: currentUser?.id, role: currentUser?.role });
+      } catch (e) {
+        console.error("Failed to mark notifications read:", e);
+      }
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  // Measure base navbar height so content is never hidden behind fixed navbar
+  useEffect(() => {
+    const updateHeight = () => {
+      if (navRef.current) {
+        const headerEl = navRef.current;
+        const mainBar = headerEl.querySelector('.main-nav-bar');
+        const announcement = headerEl.querySelector('.announcement-bar');
+        const h = (mainBar ? mainBar.offsetHeight : 72) + (announcement ? announcement.offsetHeight : 36);
+        if (h > 0) setNavHeight(h);
+      }
+    };
+
+    updateHeight();
+
+    let observer;
+    if (typeof ResizeObserver !== 'undefined' && navRef.current) {
+      observer = new ResizeObserver(updateHeight);
+      observer.observe(navRef.current);
+    }
+
+    window.addEventListener('resize', updateHeight);
+    return () => {
+      if (observer) observer.disconnect();
+      window.removeEventListener('resize', updateHeight);
+    };
+  }, []);
+
+  // Track scroll position for navbar shadow
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 15);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <>
+      <header 
+        ref={navRef}
+        className={`fixed top-0 left-0 right-0 z-50 w-full backdrop-blur-md bg-white/95 dark:bg-[#111111]/95 border-b border-[#E2E0DB] dark:border-[#292929] transition-all duration-300 ${
+          isScrolled ? 'navbar-scrolled shadow-md' : 'shadow-[0_2px_12px_rgba(17,17,17,0.03)]'
+        }`}
+      >
+        
+        {/* Top Announcement Strip in Rich Black */}
+        <div className="announcement-bar bg-[#111111] text-white text-[11px] sm:text-xs py-2.5 px-4 sm:px-6 md:px-8 lg:px-12 text-center font-medium tracking-wide flex items-center justify-center space-x-2 border-b border-[#292929]/80">
+          <span>🎉 Summer AC Offer! Get 10% OFF with code <strong className="text-[#C8A96B] underline font-bold">COOL2026</strong> + Free Installation</span>
+        </div>
+
+        <div className="main-nav-bar w-full max-w-[1536px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 py-3 sm:py-3.5 lg:py-4">
+        <div className="flex items-center justify-between min-h-[52px] sm:min-h-[56px] gap-6">
           
           {/* Brand Logo */}
           <div 
             onClick={() => setActiveTab('home')}
-            className="flex items-center space-x-2.5 cursor-pointer group flex-shrink-0"
+            className="flex items-center space-x-3 cursor-pointer group flex-shrink-0"
           >
-            <div className="w-9 h-9 rounded-xl bg-brand-navy flex items-center justify-center text-white shadow-md group-hover:bg-cyan-600 transition">
-              <Snowflake className="w-5 h-5 text-cyan-300 group-hover:rotate-45 transition-transform duration-300" />
+            <div className="w-10 h-10 rounded-xl bg-[#111111] flex items-center justify-center text-white shadow-sm group-hover:bg-[#C8A96B] transition-colors duration-300">
+              <Snowflake className="w-5 h-5 text-[#C8A96B] group-hover:text-[#111111] group-hover:rotate-45 transition-all duration-300" />
             </div>
             <div>
-              <span className="text-lg font-black tracking-tight text-brand-navy dark:text-white">
-                COOLING<span className="text-brand-orange">HUB</span>
+              <span className="text-xl font-black tracking-tight text-[#111111] dark:text-white">
+                COOLING<span className="text-[#C8A96B]">HUB</span>
               </span>
-              <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-widest -mt-1">
+              <span className="block text-[10px] text-[#555555] dark:text-[#858585] font-bold uppercase tracking-widest -mt-0.5">
                 AC Shop & Services
               </span>
             </div>
           </div>
 
-          {/* Clean Desktop Navigation Menu */}
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
+          {/* Clean Desktop Navigation Menu with Airflow Wave Letter Hover */}
+          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2.5">
             <button
               onClick={() => setActiveTab('home')}
-              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-semibold transition ${
-                activeTab === 'home'
-                  ? 'bg-slate-100 dark:bg-slate-800 text-brand-navy dark:text-cyan-400'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-brand-navy hover:bg-slate-50 dark:hover:bg-slate-800/50'
+              className={`nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 ${
+                activeTab === 'home' ? 'active' : ''
               }`}
             >
-              Home
+              <WavyWord text="Home" />
             </button>
 
             <button
               onClick={() => setActiveTab('shop')}
-              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-semibold transition ${
-                activeTab === 'shop' || activeTab === 'product_detail'
-                  ? 'bg-slate-100 dark:bg-slate-800 text-brand-navy dark:text-cyan-400'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-brand-navy hover:bg-slate-50 dark:hover:bg-slate-800/50'
+              className={`nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 ${
+                activeTab === 'shop' || activeTab === 'product_detail' ? 'active' : ''
               }`}
             >
-              AC Store
+              <WavyWord text="AC Store" />
             </button>
 
             <button
               onClick={() => setActiveTab('calculator')}
-              className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-semibold transition flex items-center space-x-1 ${
-                activeTab === 'calculator'
-                  ? 'bg-slate-100 dark:bg-slate-800 text-brand-navy dark:text-cyan-400'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-brand-navy hover:bg-slate-50 dark:hover:bg-slate-800/50'
+              className={`nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 space-x-1.5 ${
+                activeTab === 'calculator' ? 'active' : ''
               }`}
             >
-              <Zap className="w-3.5 h-3.5 text-brand-orange" />
-              <span>Savings Calc</span>
+              <Zap className="w-4 h-4 text-[#C8A96B]" />
+              <WavyWord text="Savings Calc" />
             </button>
 
             {/* Combined Services & Care Dropdown */}
@@ -96,42 +197,40 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
               <button
                 onClick={() => setServicesDropdownOpen(!servicesDropdownOpen)}
                 onMouseEnter={() => setServicesDropdownOpen(true)}
-                className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-semibold transition flex items-center space-x-1 ${
-                  ['services', 'complaints', 'amc'].includes(activeTab)
-                    ? 'bg-slate-100 dark:bg-slate-800 text-brand-navy dark:text-cyan-400'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-brand-navy hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                className={`nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 space-x-1 ${
+                  ['services', 'complaints', 'amc'].includes(activeTab) ? 'active' : ''
                 }`}
               >
-                <span>Services & Care</span>
-                <ChevronDown className="w-3 h-3 opacity-60" />
+                <WavyWord text="Services & Care" />
+                <ChevronDown className="w-3.5 h-3.5 opacity-60 text-[#555555]" />
               </button>
 
               {servicesDropdownOpen && (
                 <div 
                   onMouseLeave={() => setServicesDropdownOpen(false)}
-                  className="absolute top-full left-0 mt-1 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                  className="dropdown-premium absolute top-full left-0 mt-1 w-56 bg-white dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E] rounded-2xl shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
                 >
                   <button
                     onClick={() => { setActiveTab('services'); setServicesDropdownOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center space-x-2.5 font-medium"
+                    className="w-full text-left px-4 py-2.5 text-xs text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 font-medium transition-colors"
                   >
-                    <Wrench className="w-4 h-4 text-cyan-600" />
+                    <Wrench className="w-4 h-4 text-[#C8A96B]" />
                     <span>🔧 Book AC Service & Repair</span>
                   </button>
 
                   <button
                     onClick={() => { setActiveTab('complaints'); setServicesDropdownOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center space-x-2.5 font-medium"
+                    className="w-full text-left px-4 py-2.5 text-xs text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 font-medium transition-colors"
                   >
-                    <AlertTriangle className="w-4 h-4 text-brand-orange" />
+                    <AlertTriangle className="w-4 h-4 text-[#C8A96B]" />
                     <span>📢 Raise Complaint Ticket</span>
                   </button>
 
                   <button
                     onClick={() => { setActiveTab('amc'); setServicesDropdownOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center space-x-2.5 font-medium border-t border-slate-100 dark:border-slate-800 pt-2"
+                    className="w-full text-left px-4 py-2.5 text-xs text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 font-medium border-t border-[#E2E0DB] dark:border-[#2E2E2E] pt-2 transition-colors"
                   >
-                    <Calendar className="w-4 h-4 text-emerald-600" />
+                    <Calendar className="w-4 h-4 text-[#C8A96B]" />
                     <span>📅 AMC Maintenance Plans</span>
                   </button>
                 </div>
@@ -142,39 +241,14 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
           {/* Right Action Icons Group */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             
-            {/* Deliver Pincode Badge */}
-            <div className="hidden lg:flex items-center space-x-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-xs text-slate-600 dark:text-slate-300">
-              <MapPin className="w-3.5 h-3.5 text-brand-orange" />
-              <span className="text-[11px]">Pin:</span>
-              {editingPincode ? (
-                <form onSubmit={handlePincodeSubmit} className="flex items-center">
-                  <input 
-                    type="text" 
-                    value={tempPin} 
-                    onChange={(e) => setTempPin(e.target.value)}
-                    maxLength={6}
-                    className="w-14 px-1 bg-white dark:bg-slate-900 border rounded text-[11px] text-center"
-                    autoFocus
-                  />
-                </form>
-              ) : (
-                <button 
-                  onClick={() => setEditingPincode(true)}
-                  className="font-bold underline text-brand-navy dark:text-cyan-400 hover:text-brand-orange"
-                >
-                  {pincode}
-                </button>
-              )}
-            </div>
-
-            {/* Compare Counter Badge (If active) */}
+            {/* Compare Counter Badge */}
             {compareItems.length > 0 && (
               <button 
                 onClick={() => setActiveTab('shop')}
-                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 text-xs font-bold"
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-[#FAF7F0] dark:bg-[#1A1A1A] text-[#111111] dark:text-[#C8A96B] border border-[#E2E0DB] dark:border-[#2E2E2E] text-xs font-bold hover:border-[#C8A96B] transition"
                 title="Compare Selected ACs"
               >
-                <Scale className="w-3.5 h-3.5" />
+                <Scale className="w-3.5 h-3.5 text-[#C8A96B]" />
                 <span>({compareItems.length})</span>
               </button>
             )}
@@ -182,120 +256,209 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
             {/* Shopping Cart Icon */}
             <button 
               onClick={onOpenCart}
-              className="relative p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              className="relative p-2.5 rounded-xl text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] transition duration-200"
               title="Shopping Cart"
             >
-              <ShoppingCart className="w-5 h-5 text-brand-navy dark:text-white" />
+              <ShoppingCart className="w-5 h-5 text-[#111111] dark:text-[#F7F6F2]" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-brand-orange text-white rounded-full text-[10px] font-extrabold flex items-center justify-center px-1 shadow">
+                <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-[#C8A96B] text-[#111111] font-black rounded-full text-[10px] flex items-center justify-center px-1 shadow-sm">
                   {cartItemCount}
                 </span>
               )}
             </button>
 
+            {/* Notification Bell */}
+            {currentUser && (
+              <div className="relative">
+                <button
+                  onClick={handleToggleNotifications}
+                  className="relative p-2.5 rounded-xl text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] transition duration-200"
+                  title="Notifications"
+                >
+                  <Bell className="w-5 h-5 text-[#111111] dark:text-[#F7F6F2]" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#C8A96B] text-[#111111] font-black rounded-full text-[10px] flex items-center justify-center shadow-sm animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {notifDropdownOpen && (
+                  <div 
+                    onMouseLeave={() => setNotifDropdownOpen(false)}
+                    className="dropdown-premium absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E] rounded-2xl shadow-2xl py-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                  >
+                    <div className="px-4 pb-2 border-b border-[#E2E0DB] dark:border-[#2E2E2E] flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Bell className="w-4 h-4 text-[#C8A96B]" />
+                        <span className="font-bold text-xs sm:text-sm text-[#111111] dark:text-white">Notifications</span>
+                        {unreadCount > 0 && (
+                          <span className="px-2 py-0.5 bg-[#111111] text-[#C8A96B] text-[10px] font-bold rounded-full">
+                            {unreadCount} new
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={handleMarkAllNotifsRead}
+                        className="text-[11px] font-semibold text-[#C8A96B] hover:underline flex items-center space-x-1"
+                      >
+                        <CheckCheck className="w-3 h-3" />
+                        <span>Mark all read</span>
+                      </button>
+                    </div>
+
+                    <div className="max-h-72 overflow-y-auto divide-y divide-[#E2E0DB]/50 dark:divide-[#2E2E2E]/50">
+                      {notifications.length === 0 ? (
+                        <p className="p-4 text-center text-xs text-[#858585]">No notifications at this time.</p>
+                      ) : (
+                        notifications.slice(0, 15).map((n) => (
+                          <div 
+                            key={n.id} 
+                            onClick={async () => {
+                              try {
+                                await api.markNotificationRead(n.id);
+                              } catch (err) {
+                                console.error(err);
+                              }
+                              setNotifDropdownOpen(false);
+                              if (currentUser?.role === 'admin') {
+                                setActiveTab('admin');
+                              } else if (currentUser?.role === 'technician') {
+                                setActiveTab('technician');
+                              } else {
+                                setActiveTab('dashboard');
+                              }
+                              fetchNotifications();
+                            }}
+                            className={`p-3 text-xs space-y-1 transition cursor-pointer hover:bg-[#FAF7F0] dark:hover:bg-[#252525] ${n.is_read ? 'opacity-70' : 'bg-[#FAF7F0]/80 dark:bg-[#202020]'}`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-[#111111] dark:text-white">{n.title}</span>
+                              <span className="text-[10px] text-[#858585]">{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                            <p className="text-[#555555] dark:text-[#858585] leading-relaxed">{n.message}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              className="p-2.5 rounded-xl text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] transition duration-200"
               title="Toggle Dark/Light Theme"
             >
-              {theme === 'light' ? <Moon className="w-4.5 h-4.5 text-slate-700" /> : <Sun className="w-4.5 h-4.5 text-amber-400" />}
+              {theme === 'light' ? <Moon className="w-4.5 h-4.5 text-[#111111]" /> : <Sun className="w-4.5 h-4.5 text-[#C8A96B]" />}
             </button>
 
-            {/* Unified Account & Persona Dropdown */}
-            <div className="relative">
+            {/* User Authentication Status / Menu */}
+            {!currentUser ? (
+              /* GUEST: Show "Sign Up / Login" */
               <button
-                onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
-                className="flex items-center space-x-1.5 p-1.5 sm:px-3 sm:py-1.5 bg-brand-navy text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition shadow-sm"
+                onClick={() => openAuthModal('prompt')}
+                className="group flex items-center space-x-2 px-4 py-2.5 bg-[#111111] text-white hover:bg-[#C8A96B] hover:text-[#111111] rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 shadow-sm"
               >
-                <User className="w-4 h-4 text-cyan-300" />
-                <span className="hidden sm:inline">
-                  {currentUser.role === 'customer' ? 'My Account' : currentUser.role === 'technician' ? 'Tech Portal' : 'Admin Panel'}
-                </span>
-                <ChevronDown className="w-3 h-3 opacity-70" />
+                <User className="w-4 h-4 text-[#C8A96B] group-hover:text-[#111111] transition-colors" />
+                <span>Sign Up / Login</span>
               </button>
-
-              {accountDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                  
-                  {/* Current Active Workspace Links */}
-                  <div className="px-3 py-1.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-                    {currentUser.role.toUpperCase()} WORKSPACE
+            ) : (
+              /* LOGGED IN: Show Logged-in User's Name + Dropdown */
+              <div className="relative">
+                <button
+                  onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
+                  className="group flex items-center space-x-2 px-4 py-2.5 bg-[#111111] text-white hover:bg-[#C8A96B] hover:text-[#111111] rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 shadow-sm"
+                >
+                  <div className="w-5 h-5 rounded-full bg-[#C8A96B] text-[#111111] flex items-center justify-center text-[10px] font-black">
+                    {currentUser.name.charAt(0)}
                   </div>
+                  <span className="max-w-[120px] truncate">{currentUser.name}</span>
+                  <ChevronDown className="w-3 h-3 opacity-70 group-hover:opacity-100 transition-opacity" />
+                </button>
 
-                  {currentUser.role === 'customer' && (
+                {accountDropdownOpen && (
+                  <div 
+                    onMouseLeave={() => setAccountDropdownOpen(false)}
+                    className="dropdown-premium absolute right-0 mt-2 w-60 bg-white dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E] rounded-2xl shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+                  >
+                    {/* User Identity Header */}
+                    <div className="px-4 py-2 border-b border-[#E2E0DB] dark:border-[#2E2E2E] mb-1">
+                      <span className="text-xs font-black text-[#111111] dark:text-white block truncate">{currentUser.name}</span>
+                      <span className="text-[11px] text-[#858585] block truncate">{currentUser.email}</span>
+                      <span className="inline-block mt-1 px-2 py-0.5 rounded-md text-[9px] font-extrabold bg-[#FAF7F0] dark:bg-[#252525] text-[#C8A96B] uppercase border border-[#C8A96B]/30">
+                        {currentUser.role}
+                      </span>
+                    </div>
+
+                    {/* Dedicated Portal Links Based on User Role */}
+                    {currentUser.role === 'admin' && (
+                      <button
+                        onClick={() => { setActiveTab('admin'); setAccountDropdownOpen(false); }}
+                        className="w-full text-left px-4 py-2 text-xs font-bold text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] flex items-center space-x-2.5 transition-colors"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-[#C8A96B]" />
+                        <span>Admin Control Center</span>
+                      </button>
+                    )}
+
+                    {currentUser.role === 'technician' && (
+                      <button
+                        onClick={() => { setActiveTab('technician'); setAccountDropdownOpen(false); }}
+                        className="w-full text-left px-4 py-2 text-xs font-bold text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] flex items-center space-x-2.5 transition-colors"
+                      >
+                        <Wrench className="w-4 h-4 text-[#C8A96B]" />
+                        <span>Technician Field Portal</span>
+                      </button>
+                    )}
+
+                    {currentUser.role !== 'admin' && currentUser.role !== 'technician' && (
+                      <button
+                        onClick={() => { setActiveTab('dashboard'); setAccountDropdownOpen(false); }}
+                        className="w-full text-left px-4 py-2 text-xs font-semibold text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 transition-colors"
+                      >
+                        <UserCheck className="w-4 h-4 text-[#C8A96B]" />
+                        <span>Customer Portal & Complaints</span>
+                      </button>
+                    )}
+
+                    {/* Requirement 4: My Orders */}
                     <button
-                      onClick={() => { setActiveTab('dashboard'); setAccountDropdownOpen(false); }}
-                      className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center space-x-2"
+                      onClick={() => { 
+                        setActiveTab('dashboard'); 
+                        setAccountDropdownOpen(false); 
+                      }}
+                      className="w-full text-left px-4 py-2 text-xs font-semibold text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 transition-colors"
                     >
-                      <UserCheck className="w-4 h-4 text-cyan-600" />
-                      <span>Customer Dashboard</span>
+                      <ShoppingCart className="w-4 h-4 text-[#C8A96B]" />
+                      <span>My Orders</span>
                     </button>
-                  )}
 
-                  {currentUser.role === 'technician' && (
-                    <button
-                      onClick={() => { setActiveTab('technician'); setAccountDropdownOpen(false); }}
-                      className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center space-x-2"
-                    >
-                      <Wrench className="w-4 h-4 text-brand-orange" />
-                      <span>Technician Field Jobs</span>
-                    </button>
-                  )}
+                    {/* Requirement 4: Logout */}
+                    <div className="pt-1.5 mt-1.5 border-t border-[#E2E0DB] dark:border-[#2E2E2E]">
+                      <button
+                        onClick={() => { 
+                          logout(); 
+                          setAccountDropdownOpen(false); 
+                        }}
+                        className="w-full text-left px-4 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center space-x-2.5 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
 
-                  {currentUser.role === 'admin' && (
-                    <button
-                      onClick={() => { setActiveTab('admin'); setAccountDropdownOpen(false); }}
-                      className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center space-x-2"
-                    >
-                      <ShieldCheck className="w-4 h-4 text-purple-600" />
-                      <span>Executive Admin Panel</span>
-                    </button>
-                  )}
-
-                  {/* Demo Role Switcher Section */}
-                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-                    SWITCH DEMO ROLE
                   </div>
-                  
-                  <button
-                    onClick={() => { switchRole('customer'); setActiveTab('dashboard'); setAccountDropdownOpen(false); }}
-                    className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between ${
-                      currentUser.role === 'customer' ? 'font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/40' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span>👤 Customer (John)</span>
-                    {currentUser.role === 'customer' && <span className="text-[10px]">Active</span>}
-                  </button>
-
-                  <button
-                    onClick={() => { switchRole('technician'); setActiveTab('technician'); setAccountDropdownOpen(false); }}
-                    className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between ${
-                      currentUser.role === 'technician' ? 'font-bold text-brand-orange bg-orange-50 dark:bg-orange-950/40' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span>👨‍🔧 Technician (Rajesh)</span>
-                    {currentUser.role === 'technician' && <span className="text-[10px]">Active</span>}
-                  </button>
-
-                  <button
-                    onClick={() => { switchRole('admin'); setActiveTab('admin'); setAccountDropdownOpen(false); }}
-                    className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between ${
-                      currentUser.role === 'admin' ? 'font-bold text-purple-600 bg-purple-50 dark:bg-purple-950/40' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span>🧑‍💼 Admin Director</span>
-                    {currentUser.role === 'admin' && <span className="text-[10px]">Active</span>}
-                  </button>
-
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Mobile Drawer Hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="md:hidden p-2 rounded-xl text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525]"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -306,45 +469,91 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 pt-3 pb-5 space-y-2">
+        <div className="md:hidden bg-white dark:bg-[#1A1A1A] border-b border-[#E2E0DB] dark:border-[#2E2E2E] px-4 pt-3 pb-5 space-y-2 max-h-[calc(100vh-100px)] overflow-y-auto shadow-2xl">
+          
+          {/* Mobile Auth Button */}
+          {!currentUser ? (
+            <button
+              onClick={() => { openAuthModal('prompt'); setMobileMenuOpen(false); }}
+              className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-bold bg-[#111111] text-white flex items-center space-x-2 mb-2"
+            >
+              <User className="w-4 h-4 text-[#C8A96B]" />
+              <span>Sign Up / Login</span>
+            </button>
+          ) : (
+            <div className="p-3 bg-[#FAF7F0] dark:bg-[#252525] rounded-xl border border-[#E2E0DB] dark:border-[#2E2E2E] mb-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-black text-sm text-[#111111] dark:text-white">{currentUser.name}</span>
+                <span className="text-[10px] uppercase font-bold text-[#C8A96B]">{currentUser.role}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  onClick={() => { 
+                    if (currentUser.role === 'admin') setActiveTab('admin');
+                    else if (currentUser.role === 'technician') setActiveTab('technician');
+                    else setActiveTab('dashboard');
+                    setMobileMenuOpen(false); 
+                  }}
+                  className="btn-emerald-secondary py-1.5 text-xs text-center"
+                >
+                  {currentUser.role === 'admin' ? 'Admin Panel' : currentUser.role === 'technician' ? 'Field Portal' : 'My Profile'}
+                </button>
+                <button
+                  onClick={() => { logout(); setMobileMenuOpen(false); }}
+                  className="py-1.5 text-xs font-bold text-rose-600 bg-white dark:bg-[#111111] rounded-xl border border-rose-200 dark:border-rose-900"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={() => { setActiveTab('home'); setMobileMenuOpen(false); }}
-            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'home' ? 'bg-slate-100 dark:bg-slate-800 text-brand-navy dark:text-cyan-400' : 'text-slate-700 dark:text-slate-200'}`}
+            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'home' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
           >
             Home
           </button>
           <button
             onClick={() => { setActiveTab('shop'); setMobileMenuOpen(false); }}
-            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'shop' ? 'bg-slate-100 dark:bg-slate-800 text-brand-navy dark:text-cyan-400' : 'text-slate-700 dark:text-slate-200'}`}
+            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'shop' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
           >
             🛒 AC Store
           </button>
           <button
             onClick={() => { setActiveTab('calculator'); setMobileMenuOpen(false); }}
-            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'calculator' ? 'bg-slate-100 dark:bg-slate-800 text-brand-navy dark:text-cyan-400' : 'text-slate-700 dark:text-slate-200'}`}
+            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'calculator' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
           >
             ⚡ Energy & Savings Calculator
           </button>
           <button
             onClick={() => { setActiveTab('services'); setMobileMenuOpen(false); }}
-            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'services' ? 'bg-slate-100 dark:bg-slate-800 text-brand-navy dark:text-cyan-400' : 'text-slate-700 dark:text-slate-200'}`}
+            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'services' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
           >
             🔧 AC Services & Repair
           </button>
           <button
             onClick={() => { setActiveTab('complaints'); setMobileMenuOpen(false); }}
-            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'complaints' ? 'bg-slate-100 dark:bg-slate-800 text-brand-navy dark:text-cyan-400' : 'text-slate-700 dark:text-slate-200'}`}
+            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'complaints' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
           >
             📢 Complaints & Escalation
           </button>
           <button
             onClick={() => { setActiveTab('amc'); setMobileMenuOpen(false); }}
-            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'amc' ? 'bg-slate-100 dark:bg-slate-800 text-brand-navy dark:text-cyan-400' : 'text-slate-700 dark:text-slate-200'}`}
+            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'amc' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
           >
             📅 AMC Protection Plans
           </button>
         </div>
       )}
     </header>
+    {/* Spacer so page content is never hidden behind fixed navbar */}
+    <div 
+      style={{ height: `${navHeight}px` }} 
+      className="w-full flex-shrink-0 pointer-events-none" 
+      aria-hidden="true" 
+    />
+  </>
   );
 }
+

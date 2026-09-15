@@ -11,6 +11,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     phone = Column(String, nullable=True)
     role = Column(String, default="customer") # customer, technician, admin
+    password = Column(String, nullable=True, default="password123")
     address = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -43,6 +44,9 @@ class Product(Base):
     stock = Column(Integer, default=50)
     rating = Column(Float, default=4.5)
     reviews_count = Column(Integer, default=12)
+    model = Column(String, nullable=True)
+    is_featured = Column(Boolean, default=False)
+    badge = Column(String, default="")
 
     order_items = relationship("OrderItem", back_populates="product")
     reviews = relationship("Review", back_populates="product")
@@ -141,9 +145,12 @@ class ServiceBooking(Base):
     service_time_slot = Column(String, nullable=False)
     address = Column(Text, nullable=False)
     notes = Column(Text, nullable=True)
-    status = Column(String, default="Scheduled") # Scheduled, Technician Assigned, In Progress, Completed, Cancelled
+    status = Column(String, default="Pending") # Pending, Confirmed, Assigned, In Progress, Completed, Cancelled
     price = Column(Float, nullable=False)
     technician_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    service_notes = Column(Text, nullable=True)
+    accepted_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", foreign_keys=[user_id], back_populates="service_bookings")
@@ -157,14 +164,21 @@ class Complaint(Base):
     id = Column(Integer, primary_key=True, index=True)
     ticket_id = Column(String, unique=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
+    customer_name = Column(String, nullable=True)
+    customer_phone = Column(String, nullable=True)
+    customer_address = Column(Text, nullable=True)
+    preferred_slot = Column(String, nullable=True)
     ac_brand_model = Column(String, nullable=False)
     issue_category = Column(String, nullable=False) # Cooling Problem, Water Leakage, Noise, Compressor, Electrical, Gas Leak
     priority = Column(String, default="Normal") # Normal, High, Emergency
     description = Column(Text, nullable=False)
     photo_url = Column(String, nullable=True)
-    status = Column(String, default="Logged") # Logged, Technician Assigned, Under Inspection, Resolved, Closed
+    status = Column(String, default="Pending") # Pending, Confirmed, Assigned, In Progress, Completed, Rejected, Closed
     technician_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     resolution_notes = Column(Text, nullable=True)
+    service_notes = Column(Text, nullable=True)
+    accepted_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", foreign_keys=[user_id], back_populates="complaints")
@@ -207,3 +221,20 @@ class Review(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     product = relationship("Product", back_populates="reviews")
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    role = Column(String, nullable=True) # admin, technician, customer
+    title = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    type = Column(String, default="info") # complaint_created, technician_assigned, service_started, service_completed
+    related_id = Column(String, nullable=True) # ticket_id, order_number, etc.
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", foreign_keys=[user_id])
+

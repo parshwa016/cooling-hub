@@ -29,12 +29,12 @@ def book_service(req: ServiceBookingCreate, db: Session = Depends(get_db)):
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
-    booking_num = f"CH-SRV-2026-{random.randint(1000, 9999)}"
+    while True:
+        booking_num = f"CH-SRV-2026-{random.randint(1000, 99999)}"
+        if not db.query(ServiceBooking).filter(ServiceBooking.booking_number == booking_num).first():
+            break
     
-    # Auto-assign available technician if any
-    tech = db.query(User).filter(User.role == "technician").first()
-    tech_id = tech.id if tech else None
-
+    # Requirement 1 & 7: Initial status must always be Pending. DO NOT mark confirmed or assigned.
     booking = ServiceBooking(
         booking_number=booking_num,
         user_id=req.user_id,
@@ -44,26 +44,56 @@ def book_service(req: ServiceBookingCreate, db: Session = Depends(get_db)):
         service_time_slot=req.service_time_slot,
         address=req.address,
         notes=req.notes,
-        status="Technician Assigned" if tech_id else "Scheduled",
+        status="Pending",
         price=service.price,
-        technician_id=tech_id
+        technician_id=None
     )
     db.add(booking)
+
+    cust = db.query(User).filter(User.id == req.user_id).first()
+    cust_name = cust.name if cust else "Customer"
+
+    # Admin notification
+    from app.models import Notification
+    admin_notif = Notification(
+        role="admin",
+        title="New Service Request",
+        message=f"Customer {cust_name} has submitted a new service request '{service.title}' (#{booking_num}).",
+        type="service_request_submitted",
+        related_id=booking_num
+    )
+    db.add(admin_notif)
+
     db.commit()
     db.refresh(booking)
 
-    if tech_id:
-        job = TechnicianJob(
-            technician_id=tech_id,
-            booking_id=booking.id,
-            job_type=f"Service: {service.title}",
-            status="Assigned"
-        )
-        db.add(job)
-        db.commit()
-
     return booking
+
+def serialize_booking(b: ServiceBooking) -> dict:
+    return {
+        "id": b.id,
+        "booking_number": b.booking_number,
+        "user_id": b.user_id,
+        "service_id": b.service_id,
+        "pincode": b.pincode,
+        "service_date": b.service_date,
+        "service_time_slot": b.service_time_slot,
+        "address": b.address,
+        "notes": b.notes,
+        "status": b.status,
+        "price": b.price,
+        "technician_id": b.technician_id,
+        "technician_name": b.technician.name if b.technician else None,
+        "technician_phone": b.technician.phone if b.technician else None,
+        "service_notes": b.service_notes,
+        "accepted_at": b.accepted_at,
+        "completed_at": b.completed_at,
+        "created_at": b.created_at,
+        "service": b.service,
+        "technician": b.technician
+    }
 
 @router.get("/user/{user_id}", response_model=List[ServiceBookingResponse])
 def get_user_bookings(user_id: int, db: Session = Depends(get_db)):
-    return db.query(ServiceBooking).filter(ServiceBooking.user_id == user_id).order_by(ServiceBooking.created_at.desc()).all()
+    bookings = db.query(ServiceBooking).filter(ServiceBooking.user_id == user_id).order_by(ServiceBooking.created_at.desc()).all()
+    return [serialize_booking(b) for b in bookings]

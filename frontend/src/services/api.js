@@ -18,7 +18,8 @@ async function request(endpoint, options = {}) {
 
 export const api = {
   // Auth
-  login: (email) => request('/auth/login', { method: 'POST', body: JSON.stringify({ email }) }),
+  login: (email, password = '') => request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  register: (userData) => request('/auth/register', { method: 'POST', body: JSON.stringify(userData) }),
   getUsers: (role) => request(`/auth/users${role ? `?role=${role}` : ''}`),
   getProfile: (userId) => request(`/auth/profile/${userId}`),
 
@@ -44,6 +45,16 @@ export const api = {
   raiseComplaint: (complaintData) => request('/complaints/raise', { method: 'POST', body: JSON.stringify(complaintData) }),
   trackComplaint: (ticketId) => request(`/complaints/track/${ticketId}`),
   getUserComplaints: (userId) => request(`/complaints/user/${userId}`),
+  uploadComplaintPhoto: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('http://127.0.0.1:8000/api/complaints/upload-photo', {
+      method: 'POST',
+      body: formData
+    });
+    if (!res.ok) throw new Error('Failed to upload problem photo');
+    return res.json();
+  },
 
   // AMC
   getAMCPlans: () => request('/amc/plans'),
@@ -67,6 +78,50 @@ export const api = {
   // Admin
   getAdminAnalytics: () => request('/admin/analytics'),
   getAdminComplaints: () => request('/admin/complaints'),
+  getAdminTechnicians: () => request('/admin/technicians'),
+  acceptComplaint: (complaintId) => request(`/admin/complaints/${complaintId}/accept`, { method: 'POST' }),
+  rejectComplaint: (complaintId) => request(`/admin/complaints/${complaintId}/reject`, { method: 'POST' }),
   assignTechnicianToComplaint: (complaintId, techId) => request(`/admin/complaints/${complaintId}/assign`, { method: 'POST', body: JSON.stringify({ technician_id: techId }) }),
-  getAdminBookings: () => request('/admin/bookings')
+  updateComplaintStatus: (complaintId, status) => request(`/admin/complaints/${complaintId}/status`, { method: 'POST', body: JSON.stringify({ status }) }),
+  getAdminBookings: () => request('/admin/bookings'),
+  acceptBooking: (bookingId) => request(`/admin/bookings/${bookingId}/accept`, { method: 'POST' }),
+  rejectBooking: (bookingId) => request(`/admin/bookings/${bookingId}/reject`, { method: 'POST' }),
+  assignTechnicianToBooking: (bookingId, techId) => request(`/admin/bookings/${bookingId}/assign`, { method: 'POST', body: JSON.stringify({ technician_id: techId }) }),
+  getAdminProducts: () => request('/admin/products'),
+  createProduct: (productData) => request('/admin/products', { method: 'POST', body: JSON.stringify(productData) }),
+  updateProduct: (id, productData) => request(`/admin/products/${id}`, { method: 'PUT', body: JSON.stringify(productData) }),
+  deleteProduct: (id) => request(`/admin/products/${id}`, { method: 'DELETE' }),
+  uploadProductImage: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('http://127.0.0.1:8000/api/admin/upload-image', {
+      method: 'POST',
+      body: formData
+    });
+    if (!res.ok) throw new Error('Failed to upload image');
+    return res.json();
+  },
+
+  // Admin AC Services Management
+  getAdminServices: () => request('/admin/services'),
+  createService: (serviceData) => request('/admin/services', { method: 'POST', body: JSON.stringify(serviceData) }),
+  updateService: (id, serviceData) => request(`/admin/services/${id}`, { method: 'PUT', body: JSON.stringify(serviceData) }),
+  deleteService: (id) => request(`/admin/services/${id}`, { method: 'DELETE' }),
+
+  // Admin AMC Plans Management
+  getAdminAMCPlans: () => request('/admin/amc-plans'),
+  createAMCPlan: (planData) => request('/admin/amc-plans', { method: 'POST', body: JSON.stringify(planData) }),
+  updateAMCPlan: (id, planData) => request(`/admin/amc-plans/${id}`, { method: 'PUT', body: JSON.stringify(planData) }),
+  deleteAMCPlan: (id) => request(`/admin/amc-plans/${id}`, { method: 'DELETE' }),
+
+  // Notifications
+  getNotifications: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/notifications${query ? `?${query}` : ''}`);
+  },
+  markNotificationRead: (id) => request(`/notifications/${id}/read`, { method: 'POST' }),
+  markAllNotificationsRead: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/notifications/mark-all-read${query ? `?${query}` : ''}`, { method: 'POST' });
+  }
 };

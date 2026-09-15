@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { PopupProvider } from './context/PopupContext';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Chatbot from './components/Chatbot';
 import CartDrawer from './components/CartDrawer';
+import AuthModal from './components/AuthModal';
 
 import Home from './pages/Home';
 import Shop from './pages/Shop';
@@ -52,8 +54,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <CartProvider>
-          <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200 relative overflow-x-hidden bg-dot-grid">
+        <PopupProvider>
+          <CartProvider>
+            <div className="min-h-screen flex flex-col bg-[#F7F6F2] dark:bg-[#111111] text-[#555555] dark:text-[#F7F6F2] transition-colors duration-200 relative overflow-x-clip bg-dot-grid">
             
             {/* Top Scroll Indicator */}
             <div 
@@ -61,10 +64,10 @@ export default function App() {
               style={{ width: `${scrollProgress}%` }} 
             />
 
-            {/* Ambient Background Aurora Glowing Orbs */}
-            <div className="fixed top-[-150px] left-1/4 w-[650px] h-[650px] bg-cyan-500/10 dark:bg-cyan-500/15 rounded-full blur-[140px] pointer-events-none -z-10 animate-pulse-glow" />
-            <div className="fixed bottom-[-100px] right-10 w-[550px] h-[550px] bg-orange-500/10 dark:bg-orange-500/12 rounded-full blur-[130px] pointer-events-none -z-10 animate-pulse-glow" />
-            <div className="fixed top-[45%] right-[-150px] w-[500px] h-[500px] bg-blue-600/8 dark:bg-blue-600/12 rounded-full blur-[130px] pointer-events-none -z-10" />
+            {/* Ambient Atmosphere Glow Orbs in Champagne & Rich Black */}
+            <div className="fixed top-[-140px] left-1/4 w-[650px] h-[650px] bg-[#C8A96B]/8 dark:bg-[#C8A96B]/10 rounded-full blur-[140px] pointer-events-none -z-10 animate-pulse-glow" />
+            <div className="fixed bottom-[-100px] right-10 w-[550px] h-[550px] bg-[#111111]/5 dark:bg-[#C8A96B]/5 rounded-full blur-[130px] pointer-events-none -z-10 animate-pulse-glow" />
+            <div className="fixed top-[45%] right-[-150px] w-[500px] h-[500px] bg-[#C8A96B]/5 dark:bg-[#C8A96B]/8 rounded-full blur-[130px] pointer-events-none -z-10" />
 
             {/* Navigation Header */}
             <Navbar 
@@ -73,8 +76,8 @@ export default function App() {
               onOpenCart={() => setIsCartOpen(true)}
             />
 
-            {/* Main Content Area */}
-            <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 animate-in fade-in duration-300">
+            {/* Main Content Area — Full-width fluid screen utilization with max container */}
+            <main className="flex-1 w-full max-w-[1536px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 pt-6 pb-12 relative z-10 animate-in fade-in duration-300">
               {activeTab === 'home' && (
                 <Home 
                   setActiveTab={handleTabChange} 
@@ -148,8 +151,12 @@ export default function App() {
               setActiveTab={handleTabChange}
             />
 
+            {/* Authentication & Sign-in Requirement Modal */}
+            <AuthModal />
+
           </div>
-        </CartProvider>
+          </CartProvider>
+        </PopupProvider>
       </AuthProvider>
     </ThemeProvider>
   );

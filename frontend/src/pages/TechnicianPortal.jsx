@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Wrench, CheckCircle2, Clock, Phone, MapPin, 
-  FileCheck, AlertTriangle, RefreshCw, Star, Upload 
+  FileCheck, AlertTriangle, RefreshCw, Star, Upload, X, Check,
+  Calendar, ShieldCheck, User, ArrowRight, Eye, Camera
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { usePopup } from '../context/PopupContext';
 
 export default function TechnicianPortal() {
   const { currentUser } = useAuth();
+  const { showToast } = usePopup();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Selected job for updating report
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [status, setStatus] = useState('In Progress');
-  const [diagnosis, setDiagnosis] = useState('');
-  const [partsUsed, setPartsUsed] = useState('');
-  const [beforePhoto, setBeforePhoto] = useState('');
-  const [afterPhoto, setAfterPhoto] = useState('');
-  const [customerSig, setCustomerSig] = useState('Signed by Customer');
-  const [rating, setRating] = useState(5);
-  const [feedback, setFeedback] = useState('Satisfied with service.');
-  const [isUpdating, setIsUpdating] = useState(false);
+  // Selected job for completing report
+  const [selectedJobForComplete, setSelectedJobForComplete] = useState(null);
+  const [problemIdentified, setProblemIdentified] = useState('');
+  const [workPerformed, setWorkPerformed] = useState('');
+  const [partsReplaced, setPartsReplaced] = useState('');
+  const [additionalNotes, setAdditionalNotes] = useState('');
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   const fetchJobs = () => {
+    if (!currentUser?.id) return;
     setLoading(true);
     api.getTechnicianJobs(currentUser.id)
       .then(setJobs)
@@ -33,216 +33,378 @@ export default function TechnicianPortal() {
 
   useEffect(() => {
     fetchJobs();
-  }, [currentUser.id]);
+  }, [currentUser?.id]);
 
-  const handleOpenModal = (job) => {
-    setSelectedJob(job);
-    setStatus(job.status || 'In Progress');
-    setDiagnosis(job.diagnosis || '');
-    setPartsUsed(job.parts_used || '');
-    setBeforePhoto(job.before_photo || 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&auto=format&fit=crop&q=80');
-    setAfterPhoto(job.after_photo || 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&auto=format&fit=crop&q=80');
-  };
-
-  const handleUpdateJobSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedJob) return;
-    setIsUpdating(true);
-
+  // Handle Start Service (Assigned -> In Progress)
+  const handleStartService = async (job) => {
     try {
-      await api.updateTechnicianJob(selectedJob.id, {
-        status,
-        diagnosis,
-        parts_used: partsUsed,
-        before_photo: beforePhoto,
-        after_photo: afterPhoto,
-        customer_signature: customerSig,
-        rating: Number(rating),
-        feedback
+      await api.updateTechnicianJob(job.id, {
+        status: 'In Progress'
       });
-      setIsUpdating(false);
-      setSelectedJob(null);
+      showToast({
+        type: 'success',
+        title: 'Service Started',
+        message: `Work started for ${job.customer_name}. Customer status updated to 'In Progress'.`
+      });
       fetchJobs();
-      alert("✅ Job Status & Service Report Updated!");
-    } catch (e) {
-      setIsUpdating(false);
-      alert("Error updating job: " + e.message);
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Failed to Start Service',
+        message: err.message
+      });
     }
   };
+
+  // Open Complete Modal
+  const handleOpenCompleteModal = (job) => {
+    setSelectedJobForComplete(job);
+    setProblemIdentified(job.issue || 'Evaporator coil choked / gas pressure low');
+    setWorkPerformed('High pressure chemical cleaning, leak detection, and precision refrigerant top-up.');
+    setPartsReplaced('Refrigerant R32 (450g), Copper flare nut');
+    setAdditionalNotes('AC temperature output calibrated to 14.5°C at indoor grille. Customer satisfied.');
+  };
+
+  // Handle Complete Service & Log Report
+  const handleCompleteSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedJobForComplete) return;
+
+    setIsSubmittingReport(true);
+    try {
+      await api.updateTechnicianJob(selectedJobForComplete.id, {
+        status: 'Completed',
+        problem_identified: problemIdentified,
+        work_performed: workPerformed,
+        parts_replaced: partsReplaced,
+        additional_notes: additionalNotes,
+        diagnosis: `${problemIdentified}. Work: ${workPerformed}`
+      });
+      setIsSubmittingReport(false);
+      setSelectedJobForComplete(null);
+      showToast({
+        type: 'success',
+        title: 'Service Completed',
+        message: 'Resolution report submitted successfully. Customer and Admin notified.'
+      });
+      fetchJobs();
+    } catch (err) {
+      setIsSubmittingReport(false);
+      showToast({
+        type: 'error',
+        title: 'Failed to Complete Service',
+        message: err.message
+      });
+    }
+  };
+
+  if (!currentUser) {
+    return (
+      <div className="py-20 text-center text-[#858585]">
+        Please log in to access the Technician Field Portal.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-16">
       
-      {/* Header */}
-      <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-slate-900 text-white p-8 sm:p-12 rounded-3xl shadow-xl space-y-3">
-        <span className="px-3 py-1 bg-white/20 text-white text-xs font-bold rounded-full">CERTIFIED HVAC TECHNICIAN WORKSPACE</span>
-        <h1 className="text-3xl sm:text-4xl font-black">👨‍🔧 Technician Field Portal</h1>
-        <p className="text-xs sm:text-sm text-amber-100 max-w-2xl">
-          Welcome back, {currentUser.name}! Track assigned service & repair jobs, update job status, log diagnosis & spare parts, and generate digital service reports.
+      {/* Header Banner */}
+      <div className="bg-[#111111] text-white p-5 sm:p-6 rounded-2xl border border-[#292929] shadow-sm space-y-2.5">
+        <div className="flex items-center space-x-2">
+          <span className="px-2.5 py-0.5 bg-[#C8A96B] text-[#111111] text-[11px] font-black rounded-full uppercase tracking-wider">
+            CERTIFIED HVAC TECHNICIAN WORKSPACE
+          </span>
+          <span className="text-[11px] text-[#858585] font-semibold">Service Man App</span>
+        </div>
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight">👨‍🔧 Service Man Field Portal</h1>
+        <p className="text-xs text-[#858585] max-w-2xl font-normal leading-relaxed">
+          Welcome back, <strong className="text-white">{currentUser.name}</strong>! View your assigned customer service calls, update job status in real time, and submit verified digital completion reports.
         </p>
       </div>
 
-      {/* Jobs List */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center space-x-2">
-          <Wrench className="w-5 h-5 text-amber-500" />
-          <span>Assigned Jobs Queue ({jobs.length})</span>
-        </h2>
+      {/* Jobs Queue */}
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-black text-[#111111] dark:text-white flex items-center space-x-2">
+            <Wrench className="w-5 h-5 text-[#C8A96B]" />
+            <span>My Assigned Service & Repair Jobs ({jobs.length})</span>
+          </h2>
+          <button
+            onClick={fetchJobs}
+            className="p-2 rounded-xl bg-white dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#292929] text-[#111111] dark:text-white hover:border-[#C8A96B]"
+            title="Refresh Jobs"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-slate-400 space-x-2">
-            <RefreshCw className="w-5 h-5 animate-spin text-amber-500" />
-            <span>Fetching technician job queue...</span>
+          <div className="flex items-center justify-center py-20 text-[#858585] space-x-2">
+            <RefreshCw className="w-5 h-5 animate-spin text-[#C8A96B]" />
+            <span>Fetching assigned complaints queue...</span>
           </div>
         ) : jobs.length === 0 ? (
-          <p className="text-xs text-slate-400 py-8">No field jobs assigned currently.</p>
+          <div className="bg-white dark:bg-[#1A1A1A] p-12 text-center rounded-3xl border border-[#E2E0DB] dark:border-[#292929] space-y-3">
+            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+            <h3 className="font-bold text-lg text-[#111111] dark:text-white">All Caught Up!</h3>
+            <p className="text-xs sm:text-sm text-[#858585]">
+              No pending service calls or repair complaints currently assigned to you.
+            </p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {jobs.map((job) => (
-              <div 
-                key={job.id}
-                className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4 flex flex-col justify-between"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-3 py-1 bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-extrabold text-[10px] rounded-full uppercase">
-                      {job.job_type}
-                    </span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
-                      job.status === 'Completed' ? 'bg-emerald-500 text-slate-950' : 'bg-blue-600 text-white'
-                    }`}>
-                      {job.status}
-                    </span>
-                  </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {jobs.map((job) => {
+              const isAssigned = job.status === 'Assigned';
+              const isInProgress = job.status === 'In Progress';
+              const isCompleted = job.status === 'Completed';
 
-                  <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">
-                    Customer: {job.customer_name}
-                  </h3>
-
-                  <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1.5 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl">
-                    <p className="flex items-center space-x-1.5">
-                      <Phone className="w-3.5 h-3.5 text-amber-500" />
-                      <span><strong>Contact:</strong> {job.customer_phone}</span>
-                    </p>
-                    <p className="flex items-start space-x-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-amber-500 mt-0.5" />
-                      <span><strong>Address:</strong> {job.address}</span>
-                    </p>
-                    {job.issue && <p><strong>Issue Category:</strong> {job.issue}</p>}
-                    {job.description && <p className="italic">"{job.description}"</p>}
-                  </div>
-
-                  {job.diagnosis && (
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      <p><strong>Diagnosis:</strong> {job.diagnosis}</p>
-                      {job.parts_used && <p><strong>Parts Used:</strong> {job.parts_used}</p>}
+              return (
+                <div
+                  key={job.id}
+                  className="bg-white dark:bg-[#1A1A1A] p-6 rounded-3xl border border-[#E2E0DB] dark:border-[#292929] shadow-sm flex flex-col justify-between space-y-5 hover:border-[#C8A96B]/50 transition-all"
+                >
+                  <div className="space-y-4">
+                    
+                    {/* Top Status Strip */}
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-black text-[#C8A96B]">
+                        {job.ticket_id || `JOB-${job.id}`}
+                      </span>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                        isAssigned 
+                          ? 'bg-blue-500/10 text-blue-600 border-blue-300'
+                          : isInProgress
+                            ? 'bg-purple-500/10 text-purple-600 border-purple-300 animate-pulse'
+                            : 'bg-emerald-500/10 text-emerald-600 border-emerald-300'
+                      }`}>
+                        {job.status}
+                      </span>
                     </div>
-                  )}
-                </div>
 
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                  <button
-                    onClick={() => handleOpenModal(job)}
-                    className="px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs hover:bg-amber-400 transition"
-                  >
-                    Update Job & Service Report
-                  </button>
-                </div>
+                    {/* Customer Info Card */}
+                    <div className="p-4 bg-[#FAF7F0] dark:bg-[#252525] rounded-2xl border border-[#E2E0DB] dark:border-[#292929] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-bold text-sm text-[#111111] dark:text-white flex items-center space-x-1.5">
+                          <User className="w-4 h-4 text-[#C8A96B]" />
+                          <span>{job.customer_name}</span>
+                        </h4>
+                        {job.customer_phone && (
+                          <a
+                            href={`tel:${job.customer_phone}`}
+                            className="inline-flex items-center space-x-1 px-2.5 py-1 bg-[#111111] text-white rounded-lg text-[11px] font-bold hover:bg-[#C8A96B] hover:text-[#111111] transition"
+                          >
+                            <Phone className="w-3 h-3" />
+                            <span>Call</span>
+                          </a>
+                        )}
+                      </div>
 
-              </div>
-            ))}
+                      <p className="text-xs text-[#555555] dark:text-[#858585] flex items-start space-x-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-[#C8A96B] flex-shrink-0 mt-0.5" />
+                        <span>{job.address}</span>
+                      </p>
+
+                      <div className="flex items-center space-x-1.5 text-xs text-[#858585]">
+                        <Clock className="w-3.5 h-3.5 text-[#C8A96B]" />
+                        <span>Slot: {job.time_slot}</span>
+                      </div>
+                    </div>
+
+                    {/* AC & Complaint Details */}
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-[#858585]">AC Unit:</span>
+                        <strong className="text-[#111111] dark:text-white">{job.ac_details || job.service_name}</strong>
+                      </div>
+                      {job.issue && (
+                        <div className="flex justify-between">
+                          <span className="text-[#858585]">Reported Issue:</span>
+                          <span className="font-bold text-rose-600 dark:text-rose-400">{job.issue}</span>
+                        </div>
+                      )}
+                      {job.description && (
+                        <div className="pt-1">
+                          <span className="text-[#858585] block text-[11px]">Customer Note:</span>
+                          <p className="text-[#555555] dark:text-[#858585] italic line-clamp-2 mt-0.5">
+                            "{job.description}"
+                          </p>
+                        </div>
+                      )}
+
+                      {job.photo_url && (
+                        <div className="pt-2">
+                          <span className="text-[#858585] block text-[11px] font-bold mb-1">Customer Problem Photo:</span>
+                          <a
+                            href={job.photo_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group relative block w-full h-28 rounded-xl overflow-hidden border border-[#E2E0DB] dark:border-[#292929] bg-black/5 hover:border-[#C8A96B] transition shadow-sm"
+                          >
+                            <img
+                              src={job.photo_url}
+                              alt="Customer Problem"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                              <Eye className="w-3.5 h-3.5 text-[#C8A96B]" /> View Full Photo
+                            </div>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Completion Notes if already completed */}
+                    {isCompleted && job.service_notes && (
+                      <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800 text-[11px] text-emerald-800 dark:text-emerald-300">
+                        <strong>Logged Service Report:</strong>
+                        <p className="mt-0.5">{job.service_notes}</p>
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* Actions according to Requirement 7: Assigned -> In Progress -> Completed */}
+                  <div className="pt-3 border-t border-[#E2E0DB] dark:border-[#292929] flex flex-col sm:flex-row gap-2">
+                    {isAssigned && (
+                      <button
+                        onClick={() => handleStartService(job)}
+                        className="btn-emerald-primary w-full py-2.5 text-xs font-bold flex items-center justify-center space-x-1.5"
+                      >
+                        <Wrench className="w-3.5 h-3.5" />
+                        <span>Start Service (In Progress)</span>
+                      </button>
+                    )}
+
+                    {isInProgress && (
+                      <button
+                        onClick={() => handleOpenCompleteModal(job)}
+                        className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center justify-center space-x-1.5 transition"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Complete Service & Log Notes</span>
+                      </button>
+                    )}
+
+                    {isCompleted && (
+                      <div className="w-full py-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-center font-bold text-xs rounded-xl flex items-center justify-center space-x-1">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Job Completed & Verified</span>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              );
+            })}
           </div>
         )}
+
       </div>
 
-      {/* Report Update Modal */}
-      {selectedJob && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-xl w-full p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+      {/* ============================================================ */}
+      {/* MODAL: COMPLETE SERVICE & LOG REPORT */}
+      {/* ============================================================ */}
+      {selectedJobForComplete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#1A1A1A] w-full max-w-xl rounded-3xl border border-[#E2E0DB] dark:border-[#292929] shadow-2xl p-6 sm:p-8 space-y-5 max-h-[90vh] overflow-y-auto">
             
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div>
-                <span className="text-[10px] font-bold text-amber-600 uppercase">Field Work Order</span>
-                <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">Digital Service Report</h3>
+            <div className="flex items-center justify-between border-b border-[#E2E0DB] dark:border-[#292929] pb-3">
+              <div className="flex items-center space-x-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                <h3 className="font-bold text-lg text-[#111111] dark:text-white">Service Completion Report</h3>
               </div>
-              <button onClick={() => setSelectedJob(null)} className="text-xs font-bold text-slate-400">✕ Close</button>
+              <button 
+                onClick={() => setSelectedJobForComplete(null)}
+                className="p-1 rounded-lg text-[#858585] hover:text-[#111111]"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <form onSubmit={handleUpdateJobSubmit} className="space-y-4 text-xs">
+            <p className="text-xs text-[#858585]">
+              Ticket #{selectedJobForComplete.ticket_id} for customer <strong>{selectedJobForComplete.customer_name}</strong>. Log field diagnosis and replaced parts to complete this job.
+            </p>
+
+            <form onSubmit={handleCompleteSubmit} className="space-y-4 text-xs sm:text-sm">
+              
+              {/* Problem Identified */}
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Job Status</label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full p-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold"
-                >
-                  <option value="Accepted">Job Accepted</option>
-                  <option value="In Progress">In Progress (Diagnosing)</option>
-                  <option value="Completed">Completed & Verified</option>
-                </select>
+                <label className="block font-bold text-[#111111] dark:text-white mb-1">
+                  1. Problem Identified
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={problemIdentified}
+                  onChange={(e) => setProblemIdentified(e.target.value)}
+                  placeholder="e.g. Capacitor blown, dirty filter choked cooling coil"
+                  className="w-full px-3 py-2 bg-[#F7F6F2] dark:bg-[#252525] border border-[#E2E0DB] dark:border-[#292929] rounded-xl"
+                />
               </div>
 
+              {/* Work Performed */}
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Diagnosis & Work Done</label>
+                <label className="block font-bold text-[#111111] dark:text-white mb-1">
+                  2. Work Performed
+                </label>
                 <textarea
-                  value={diagnosis}
-                  onChange={(e) => setDiagnosis(e.target.value)}
-                  placeholder="e.g. Cleaned clogged drain tray, refilled 200g R32 gas..."
-                  rows={2}
-                  className="w-full p-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl"
+                  rows="2"
+                  required
+                  value={workPerformed}
+                  onChange={(e) => setWorkPerformed(e.target.value)}
+                  placeholder="e.g. Chemical foam wash, replaced starting capacitor, checked 55 psi gas pressure."
+                  className="w-full px-3 py-2 bg-[#F7F6F2] dark:bg-[#252525] border border-[#E2E0DB] dark:border-[#292929] rounded-xl resize-none"
                 />
               </div>
 
+              {/* Parts Replaced */}
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Spare Parts Used</label>
+                <label className="block font-bold text-[#111111] dark:text-white mb-1">
+                  3. Spare Parts Replaced (if any)
+                </label>
                 <input
                   type="text"
-                  value={partsUsed}
-                  onChange={(e) => setPartsUsed(e.target.value)}
-                  placeholder="e.g. 1.5m Copper Pipe, Capacitor 45uF"
-                  className="w-full p-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl"
+                  value={partsReplaced}
+                  onChange={(e) => setPartsReplaced(e.target.value)}
+                  placeholder="e.g. 50uF Heavy Duty Capacitor, R32 Gas Top-Up (300g)"
+                  className="w-full px-3 py-2 bg-[#F7F6F2] dark:bg-[#252525] border border-[#E2E0DB] dark:border-[#292929] rounded-xl"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Before Service Photo URL</label>
-                  <input
-                    type="text"
-                    value={beforePhoto}
-                    onChange={(e) => setBeforePhoto(e.target.value)}
-                    className="w-full p-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">After Service Photo URL</label>
-                  <input
-                    type="text"
-                    value={afterPhoto}
-                    onChange={(e) => setAfterPhoto(e.target.value)}
-                    className="w-full p-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl"
-                  />
-                </div>
-              </div>
-
+              {/* Additional Notes */}
               <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Digital Customer Sign-off</label>
+                <label className="block font-bold text-[#111111] dark:text-white mb-1">
+                  4. Additional Notes / Customer Feedback
+                </label>
                 <input
                   type="text"
-                  value={customerSig}
-                  onChange={(e) => setCustomerSig(e.target.value)}
-                  className="w-full p-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-emerald-600"
+                  value={additionalNotes}
+                  onChange={(e) => setAdditionalNotes(e.target.value)}
+                  placeholder="e.g. Customer verified cooling temperature 15°C. System running smoothly."
+                  className="w-full px-3 py-2 bg-[#F7F6F2] dark:bg-[#252525] border border-[#E2E0DB] dark:border-[#292929] rounded-xl"
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={isUpdating}
-                className="w-full py-3 bg-amber-500 text-slate-950 font-bold rounded-xl hover:bg-amber-400 transition"
-              >
-                {isUpdating ? 'Saving...' : 'Submit Digital Report & Close Job'}
-              </button>
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-3 border-t border-[#E2E0DB] dark:border-[#292929]">
+                <button
+                  type="button"
+                  onClick={() => setSelectedJobForComplete(null)}
+                  className="btn-emerald-secondary px-5 py-2.5 text-xs font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingReport}
+                  className="py-2.5 px-6 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center space-x-1.5 transition"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{isSubmittingReport ? 'Submitting Report...' : 'Submit & Complete Service'}</span>
+                </button>
+              </div>
+
             </form>
 
           </div>

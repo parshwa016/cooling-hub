@@ -7,23 +7,23 @@ export default function RatingStars({ rating = 4.5, count = null }) {
 
   return (
     <div className="flex items-center space-x-1">
-      <div className="flex items-center text-amber-400">
+      <div className="flex items-center text-[#C8A96B]">
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
             className={`w-3.5 h-3.5 ${
               i < fullStars
-                ? 'fill-amber-400 text-amber-400'
+                ? 'fill-[#C8A96B] text-[#C8A96B]'
                 : i === fullStars && hasHalf
-                ? 'fill-amber-400/50 text-amber-400'
-                : 'text-slate-300 dark:text-slate-600'
+                ? 'fill-[#C8A96B]/50 text-[#C8A96B]'
+                : 'text-[#E2E0DB] dark:text-[#333333]'
             }`}
           />
         ))}
       </div>
-      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">{rating}</span>
+      <span className="text-xs font-bold text-[#111111] dark:text-[#F7F6F2] ml-1">{rating}</span>
       {count !== null && (
-        <span className="text-[11px] text-slate-400 ml-0.5">({count})</span>
+        <span className="text-[11px] text-[#858585] ml-0.5">({count})</span>
       )}
     </div>
   );

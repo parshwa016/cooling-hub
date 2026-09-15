@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState } from 'react';
+import { usePopup } from './PopupContext';
 
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
+  const { showToast } = usePopup();
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [compareItems, setCompareItems] = useState([]);
@@ -55,7 +57,11 @@ export function CartProvider({ children }) {
         return prev.filter((item) => item.id !== product.id);
       }
       if (prev.length >= 3) {
-        alert("You can compare up to 3 AC products simultaneously.");
+        showToast({
+          type: 'warning',
+          title: 'Comparison Limit Reached',
+          message: 'You can compare up to 3 AC products simultaneously.'
+        });
         return prev;
       }
       return [...prev, product];

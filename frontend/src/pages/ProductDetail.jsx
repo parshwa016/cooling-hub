@@ -5,12 +5,15 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import RatingStars from '../components/RatingStars';
+import LuxurySelect from '../components/LuxurySelect';
 
 export default function ProductDetail({ productId, setActiveTab }) {
+  const { currentUser, openAuthModal } = useAuth();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [reviewName, setReviewName] = useState('');
+  const [reviewName, setReviewName] = useState(currentUser?.name || '');
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewTitle, setReviewTitle] = useState('');
   const [reviewComment, setReviewComment] = useState('');
@@ -30,6 +33,10 @@ export default function ProductDetail({ productId, setActiveTab }) {
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
+    if (!currentUser) {
+      openAuthModal('prompt');
+      return;
+    }
     if (!reviewName || !reviewComment) return;
     try {
       await api.addReview(productId, {
@@ -52,8 +59,8 @@ export default function ProductDetail({ productId, setActiveTab }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24 text-slate-400 space-x-2">
-        <RefreshCw className="w-6 h-6 animate-spin text-cyan-500" />
+      <div className="flex items-center justify-center py-24 text-[#555555] space-x-2">
+        <RefreshCw className="w-6 h-6 animate-spin text-[#C8A96B]" />
         <span>Loading product details...</span>
       </div>
     );
@@ -70,45 +77,45 @@ export default function ProductDetail({ productId, setActiveTab }) {
       {/* Back button */}
       <button
         onClick={() => setActiveTab('shop')}
-        className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-cyan-600 transition"
+        className="inline-flex items-center space-x-1.5 text-xs font-bold text-[#555555] hover:text-[#111111] dark:hover:text-[#C8A96B] transition"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back to AC Store</span>
       </button>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 xl:gap-14 bg-white dark:bg-[#1A1A1A] p-6 sm:p-10 lg:p-12 rounded-3xl border border-[#E2E0DB] dark:border-[#2E2E2E] shadow-sm">
         
         {/* Left Column: Image Showcase */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 h-[380px] sm:h-[420px]">
+        <div className="lg:col-span-6 space-y-5">
+          <div className="relative rounded-2xl overflow-hidden border border-[#E2E0DB] dark:border-[#2E2E2E] bg-[#F7F6F2] dark:bg-[#252525] h-[380px] sm:h-[440px] lg:h-[480px]">
             <img
               src={product.image}
               alt={product.title}
               className="w-full h-full object-cover"
             />
-            <span className="absolute top-4 left-4 px-3 py-1 bg-amber-500 text-slate-950 font-black text-xs rounded-full shadow">
+            <span className="absolute top-4 left-4 px-3.5 py-1.5 bg-white/95 dark:bg-[#1A1A1A]/95 border border-[#E2E0DB] text-[#111111] dark:text-[#C8A96B] font-black text-xs sm:text-sm rounded-full shadow-sm">
               ★ {product.star_rating} Star {product.is_inverter ? 'Inverter' : 'Fixed Speed'}
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div className="p-3 bg-cyan-50 dark:bg-slate-800/80 rounded-xl text-center border border-cyan-100 dark:border-slate-700">
-              <Zap className="w-5 h-5 text-cyan-600 dark:text-cyan-400 mx-auto mb-1" />
-              <span className="block text-[10px] text-slate-400 font-bold uppercase">ISEER Rating</span>
-              <span className="text-sm font-black text-slate-800 dark:text-slate-100">{product.iseer_rating}</span>
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            <div className="p-3.5 sm:p-4 bg-[#F7F6F2] dark:bg-[#252525] rounded-xl text-center border border-[#E2E0DB] dark:border-[#2E2E2E]">
+              <Zap className="w-5 h-5 text-[#C8A96B] mx-auto mb-1" />
+              <span className="block text-[11px] text-[#555555] dark:text-[#858585] font-bold uppercase">ISEER Rating</span>
+              <span className="text-base sm:text-lg font-black text-[#111111] dark:text-white">{product.iseer_rating}</span>
             </div>
 
-            <div className="p-3 bg-blue-50 dark:bg-slate-800/80 rounded-xl text-center border border-blue-100 dark:border-slate-700">
-              <Volume2 className="w-5 h-5 text-blue-600 dark:text-blue-400 mx-auto mb-1" />
-              <span className="block text-[10px] text-slate-400 font-bold uppercase">Noise Level</span>
-              <span className="text-sm font-black text-slate-800 dark:text-slate-100">{product.noise_level_db} dB</span>
+            <div className="p-3.5 sm:p-4 bg-[#F7F6F2] dark:bg-[#252525] rounded-xl text-center border border-[#E2E0DB] dark:border-[#2E2E2E]">
+              <Volume2 className="w-5 h-5 text-[#111111] dark:text-[#C8A96B] mx-auto mb-1" />
+              <span className="block text-[11px] text-[#555555] dark:text-[#858585] font-bold uppercase">Noise Level</span>
+              <span className="text-base sm:text-lg font-black text-[#111111] dark:text-white">{product.noise_level_db} dB</span>
             </div>
 
-            <div className="p-3 bg-emerald-50 dark:bg-slate-800/80 rounded-xl text-center border border-emerald-100 dark:border-slate-700">
-              <Award className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mx-auto mb-1" />
-              <span className="block text-[10px] text-slate-400 font-bold uppercase">Warranty</span>
-              <span className="text-sm font-black text-slate-800 dark:text-slate-100">10 Yr Comp</span>
+            <div className="p-3.5 sm:p-4 bg-[#F7F6F2] dark:bg-[#252525] rounded-xl text-center border border-[#E2E0DB] dark:border-[#2E2E2E]">
+              <Award className="w-5 h-5 text-[#C8A96B] mx-auto mb-1" />
+              <span className="block text-[11px] text-[#555555] dark:text-[#858585] font-bold uppercase">Warranty</span>
+              <span className="text-base sm:text-lg font-black text-[#111111] dark:text-white">10 Yr Comp</span>
             </div>
           </div>
         </div>
@@ -116,44 +123,44 @@ export default function ProductDetail({ productId, setActiveTab }) {
         {/* Right Column: Specs & Purchase */}
         <div className="lg:col-span-6 space-y-6">
           <div>
-            <span className="text-xs font-extrabold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#C8A96B]">
               {product.brand} • {product.ac_type} AC • {product.tonnage} Ton
             </span>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1 leading-snug">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#111111] dark:text-white mt-1 leading-snug">
               {product.title}
             </h1>
-            <div className="mt-2 flex items-center space-x-3">
+            <div className="mt-2.5 flex items-center space-x-3">
               <RatingStars rating={product.rating} count={product.reviews_count} />
-              <span className="text-xs text-slate-400">|</span>
-              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center space-x-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
+              <span className="text-xs text-[#555555]">|</span>
+              <span className="text-xs sm:text-sm text-[#C8A96B] font-bold flex items-center space-x-1">
+                <CheckCircle2 className="w-4 h-4" />
                 <span>In Stock ({product.stock} units)</span>
               </span>
             </div>
           </div>
 
           {/* Pricing Card */}
-          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="p-4 sm:p-5 bg-[#F7F6F2] dark:bg-[#252525] rounded-2xl border border-[#E2E0DB] dark:border-[#2E2E2E] flex items-center justify-between">
             <div>
-              <div className="flex items-baseline space-x-2">
-                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">₹{product.price.toLocaleString()}</span>
-                <span className="text-xs text-slate-400 line-through">₹{product.original_price.toLocaleString()}</span>
-                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">({product.discount_percent}% OFF)</span>
+              <div className="flex items-baseline space-x-2.5">
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-[#111111] dark:text-white">₹{product.price.toLocaleString()}</span>
+                <span className="text-xs sm:text-sm text-[#555555] line-through">₹{product.original_price.toLocaleString()}</span>
+                <span className="text-xs sm:text-sm font-bold text-[#C8A96B]">({product.discount_percent}% OFF)</span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Inclusive of all taxes + Standard Express Delivery</p>
+              <p className="text-xs text-[#555555] dark:text-[#858585] mt-1">Inclusive of all taxes + Standard Express Delivery</p>
             </div>
           </div>
 
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p className="text-sm sm:text-base text-[#111111] dark:text-[#858585] leading-relaxed">
             {product.description}
           </p>
 
           {/* Key Features Bullet List */}
-          <div className="space-y-2">
-            <h4 className="font-bold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider">Key Features & Technologies:</h4>
+          <div className="space-y-2.5">
+            <h4 className="font-bold text-xs sm:text-sm text-[#111111] dark:text-white uppercase tracking-wider">Key Features & Technologies:</h4>
             <div className="flex flex-wrap gap-2">
               {(product.features || '').split(',').map((feat, idx) => (
-                <span key={idx} className="px-3 py-1 bg-cyan-50 dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 rounded-lg text-xs font-semibold border border-cyan-100 dark:border-slate-700">
+                <span key={idx} className="px-3.5 py-1.5 bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B] rounded-lg text-xs sm:text-sm font-semibold border border-[#C8A96B]/30">
                   ✓ {feat.trim()}
                 </span>
               ))}
@@ -161,35 +168,47 @@ export default function ProductDetail({ productId, setActiveTab }) {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex flex-wrap gap-3.5 pt-4 border-t border-[#E2E0DB] dark:border-[#2E2E2E]">
             <button
               onClick={() => addToCart(product)}
-              className="flex-1 py-3.5 bg-gradient-to-r from-cool-600 to-cyan-600 text-white font-bold rounded-2xl shadow-lg hover:opacity-95 transition flex items-center justify-center space-x-2 text-xs sm:text-sm"
+              className="btn-emerald-primary flex-1 py-4 text-sm sm:text-base font-bold"
             >
-              <ShoppingCart className="w-4 h-4" />
+              <ShoppingCart className="w-5 h-5 mr-2" />
               <span>Add to Shopping Cart</span>
             </button>
 
             <button
+              onClick={() => {
+                addToCart(product);
+                if (!currentUser) {
+                  openAuthModal('prompt');
+                }
+              }}
+              className="btn-emerald-secondary px-6 sm:px-8 py-4 text-sm sm:text-base font-bold"
+            >
+              <span>⚡ Buy Now</span>
+            </button>
+
+            <button
               onClick={() => toggleWishlist(product)}
-              className={`p-3.5 rounded-2xl border font-bold transition flex items-center space-x-1 text-xs ${
+              className={`p-4 rounded-2xl border font-bold transition flex items-center space-x-1 text-sm ${
                 isWishlisted 
                   ? 'bg-rose-500 text-white border-rose-500' 
-                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50'
+                  : 'bg-white dark:bg-[#1A1A1A] border-[#E2E0DB] dark:border-[#2E2E2E] text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0]'
               }`}
             >
-              <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-white' : ''}`} />
+              <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-white' : ''}`} />
             </button>
 
             <button
               onClick={() => toggleCompare(product)}
-              className={`p-3.5 rounded-2xl border font-bold transition flex items-center space-x-1 text-xs ${
+              className={`p-4 rounded-2xl border font-bold transition flex items-center space-x-1 text-sm ${
                 isCompared 
-                  ? 'bg-indigo-600 text-white border-indigo-600' 
-                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50'
+                  ? 'bg-[#111111] text-white border-[#111111]' 
+                  : 'bg-white dark:bg-[#1A1A1A] border-[#E2E0DB] dark:border-[#2E2E2E] text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0]'
               }`}
             >
-              <Scale className="w-4 h-4" />
+              <Scale className="w-5 h-5" />
             </button>
           </div>
 
@@ -198,15 +217,15 @@ export default function ProductDetail({ productId, setActiveTab }) {
       </div>
 
       {/* Review Section */}
-      <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-6">
-        <h3 className="font-bold text-slate-900 dark:text-white text-lg flex items-center space-x-2">
-          <MessageSquare className="w-5 h-5 text-cyan-600" />
+      <div className="bg-white dark:bg-[#1A1A1A] p-6 sm:p-8 rounded-3xl border border-[#E2E0DB] dark:border-[#2E2E2E] space-y-6">
+        <h3 className="font-bold text-[#111111] dark:text-white text-lg flex items-center space-x-2">
+          <MessageSquare className="w-5 h-5 text-[#C8A96B]" />
           <span>Customer Reviews & Ratings ({product.reviews_count})</span>
         </h3>
 
         {/* Add Review Form */}
-        <form onSubmit={handleReviewSubmit} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
-          <h4 className="font-bold text-xs text-slate-800 dark:text-slate-200 uppercase">Write a Customer Review</h4>
+        <form onSubmit={handleReviewSubmit} className="p-4 bg-[#F7F6F2] dark:bg-[#252525] rounded-2xl border border-[#E2E0DB] dark:border-[#2E2E2E] space-y-3">
+          <h4 className="font-bold text-xs text-[#111111] dark:text-white uppercase">Write a Customer Review</h4>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
@@ -214,21 +233,24 @@ export default function ProductDetail({ productId, setActiveTab }) {
               value={reviewName}
               onChange={(e) => setReviewName(e.target.value)}
               placeholder="Your Name"
-              className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs"
+              className="px-3 py-2 bg-white dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E] rounded-xl text-xs text-[#111111] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C8A96B]"
               required
             />
 
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Rating:</span>
-              <select
-                value={reviewRating}
-                onChange={(e) => setReviewRating(Number(e.target.value))}
-                className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-amber-500"
-              >
-                <option value={5}>★★★★★ 5 Stars (Excellent)</option>
-                <option value={4}>★★★★☆ 4 Stars (Good)</option>
-                <option value={3}>★★★☆☆ 3 Stars (Average)</option>
-              </select>
+              <span className="text-xs font-semibold text-[#555555] dark:text-[#858585]">Rating:</span>
+              <div className="w-56">
+                <LuxurySelect
+                  value={reviewRating}
+                  onChange={(e) => setReviewRating(Number(e.target.value))}
+                  options={[
+                    { value: 5, label: '★★★★★ 5 Stars (Excellent)' },
+                    { value: 4, label: '★★★★☆ 4 Stars (Good)' },
+                    { value: 3, label: '★★★☆☆ 3 Stars (Average)' }
+                  ]}
+                  size="sm"
+                />
+              </div>
             </div>
           </div>
 
@@ -237,18 +259,18 @@ export default function ProductDetail({ productId, setActiveTab }) {
             onChange={(e) => setReviewComment(e.target.value)}
             placeholder="Share your experience with this AC model (cooling speed, noise, electricity consumption)..."
             rows={3}
-            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs"
+            className="w-full px-3 py-2 bg-white dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E] rounded-xl text-xs text-[#111111] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C8A96B]"
             required
           />
 
           <div className="flex items-center justify-between">
             <button
               type="submit"
-              className="px-4 py-2 bg-cyan-600 text-white rounded-xl text-xs font-bold hover:bg-cyan-700 transition"
+              className="btn-emerald-primary px-4 py-2 text-xs"
             >
               Post Review
             </button>
-            {submitMsg && <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">{submitMsg}</span>}
+            {submitMsg && <span className="text-xs text-[#C8A96B] font-semibold">{submitMsg}</span>}
           </div>
         </form>
       </div>
