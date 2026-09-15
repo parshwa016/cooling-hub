@@ -449,6 +449,7 @@ export default function Home({ setActiveTab, onSelectProduct }) {
                       src={p.image}
                       alt={p.title}
                       className="w-full h-full object-cover"
+                      onError={(e) => { e.target.src = '/images/products/daikin_split.jpg'; }}
                     />
                     <div className="absolute top-3 left-3 flex flex-col gap-1 items-start z-10 pointer-events-none">
                       <span className="px-2.5 py-1 bg-white/95 dark:bg-[#1A1A1A]/95 border border-[#E2E0DB] text-[#111111] dark:text-[#C8A96B] font-black text-[10px] rounded-full shadow-sm">

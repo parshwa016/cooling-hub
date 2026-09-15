@@ -48,7 +48,7 @@ export default function AdminDashboard({ setActiveTab }) {
     cooling_capacity_w: 5200,
     iseer_rating: 4.8,
     annual_power_kwh: 790,
-    image: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=800&auto=format&fit=crop&q=80',
+    image: '/images/products/daikin_split.jpg',
     features: 'Copper Condenser, Anti-Bacterial Filter, Turbo Cooling, 3D Airflow',
     description: 'High efficiency modern inverter AC with intelligent cooling and ultra-low noise operation.',
     stock: 50,
@@ -1463,7 +1463,7 @@ export default function AdminDashboard({ setActiveTab }) {
                         src={productForm.image} 
                         alt="Preview" 
                         className="w-full h-full object-cover"
-                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=400'; }}
+                        onError={(e) => { e.target.src = '/images/products/daikin_split.jpg'; }}
                       />
                     ) : (
                       <span className="text-[10px] text-[#858585] text-center p-2">No image loaded</span>

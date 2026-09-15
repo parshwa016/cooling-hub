@@ -251,6 +251,7 @@ export default function Shop({ setActiveTab, onSelectProduct }) {
                           src={p.image}
                           alt={p.title}
                           className="w-full h-full object-cover"
+                          onError={(e) => { e.target.src = '/images/products/daikin_split.jpg'; }}
                         />
                         
                         {/* Badges */}

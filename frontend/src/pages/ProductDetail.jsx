@@ -93,6 +93,7 @@ export default function ProductDetail({ productId, setActiveTab }) {
               src={product.image}
               alt={product.title}
               className="w-full h-full object-cover"
+              onError={(e) => { e.target.src = '/images/products/daikin_split.jpg'; }}
             />
             <span className="absolute top-4 left-4 px-3.5 py-1.5 bg-white/95 dark:bg-[#1A1A1A]/95 border border-[#E2E0DB] text-[#111111] dark:text-[#C8A96B] font-black text-xs sm:text-sm rounded-full shadow-sm">
               ★ {product.star_rating} Star {product.is_inverter ? 'Inverter' : 'Fixed Speed'}
