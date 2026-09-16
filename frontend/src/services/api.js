@@ -1,4 +1,5 @@
-const API_BASE = 'http://127.0.0.1:8000/api';
+const RAW_API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const API_BASE = `${RAW_API_URL.replace(/\/+$/, '')}/api`;
 
 async function request(endpoint, options = {}) {
   const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -48,7 +49,7 @@ export const api = {
   uploadComplaintPhoto: async (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch('http://127.0.0.1:8000/api/complaints/upload-photo', {
+    const res = await fetch(`${API_BASE}/complaints/upload-photo`, {
       method: 'POST',
       body: formData
     });
@@ -94,7 +95,7 @@ export const api = {
   uploadProductImage: async (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch('http://127.0.0.1:8000/api/admin/upload-image', {
+    const res = await fetch(`${API_BASE}/admin/upload-image`, {
       method: 'POST',
       body: formData
     });
