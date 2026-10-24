@@ -106,6 +106,16 @@ export default function TechnicianPortal() {
     );
   }
 
+  if (currentUser.role !== 'technician' && currentUser.role !== 'admin') {
+    return (
+      <div className="py-20 text-center space-y-3">
+        <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto" />
+        <h3 className="text-lg font-bold text-[#111111] dark:text-white">Restricted Access</h3>
+        <p className="text-xs text-[#858585]">This portal is strictly reserved for certified Cooling Hub field service technicians.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 pb-16">
       

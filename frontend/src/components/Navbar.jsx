@@ -29,6 +29,7 @@ function WavyWord({ text }) {
 
 export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
   const { currentUser, logout, openAuthModal, switchRole } = useAuth();
+  const isTechnician = currentUser?.role === 'technician';
   const { cartItemCount, compareItems } = useCart();
   const { theme, toggleTheme } = useTheme();
   
@@ -136,9 +137,18 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
         }`}
       >
         
-        {/* Top Announcement Strip in Rich Black */}
+        {/* Top Announcement Strip */}
         <div className="announcement-bar bg-[#111111] text-white text-[11px] sm:text-xs py-2.5 px-4 sm:px-6 md:px-8 lg:px-12 text-center font-medium tracking-wide flex items-center justify-center space-x-2 border-b border-[#292929]/80">
-          <span>🎉 Summer AC Offer! Get 10% OFF with code <strong className="text-[#C8A96B] underline font-bold">COOL2026</strong> + Free Installation</span>
+          {isTechnician ? (
+            <div className="flex items-center space-x-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[#FAF7F0] font-semibold">Service Man Duty Mode</span>
+              <span className="text-[#858585]">|</span>
+              <span className="text-[#C8A96B] font-bold">Field Service Workspace & Real-time Dispatch</span>
+            </div>
+          ) : (
+            <span>🎉 Summer AC Offer! Get 10% OFF with code <strong className="text-[#C8A96B] underline font-bold">COOL2026</strong> + Free Installation</span>
+          )}
         </div>
 
         <div className="main-nav-bar w-full max-w-[1536px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 py-3 sm:py-3.5 lg:py-4">
@@ -146,103 +156,119 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
           
           {/* Brand Logo */}
           <div 
-            onClick={() => setActiveTab('home')}
+            onClick={() => setActiveTab(isTechnician ? 'technician' : 'home')}
             className="flex items-center space-x-3 cursor-pointer group flex-shrink-0"
           >
             <div className="w-10 h-10 rounded-xl bg-[#111111] flex items-center justify-center text-white shadow-sm group-hover:bg-[#C8A96B] transition-colors duration-300">
-              <Snowflake className="w-5 h-5 text-[#C8A96B] group-hover:text-[#111111] group-hover:rotate-45 transition-all duration-300" />
+              {isTechnician ? (
+                <Wrench className="w-5 h-5 text-[#C8A96B] group-hover:text-[#111111] transition-all duration-300" />
+              ) : (
+                <Snowflake className="w-5 h-5 text-[#C8A96B] group-hover:text-[#111111] group-hover:rotate-45 transition-all duration-300" />
+              )}
             </div>
             <div>
               <span className="text-xl font-black tracking-tight text-[#111111] dark:text-white">
                 COOLING<span className="text-[#C8A96B]">HUB</span>
               </span>
               <span className="block text-[10px] text-[#555555] dark:text-[#858585] font-bold uppercase tracking-widest -mt-0.5">
-                AC Shop & Services
+                {isTechnician ? 'Field Service Portal' : 'AC Shop & Services'}
               </span>
             </div>
           </div>
 
-          {/* Clean Desktop Navigation Menu with Airflow Wave Letter Hover */}
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2.5">
-            <button
-              onClick={() => setActiveTab('home')}
-              className={`nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 ${
-                activeTab === 'home' ? 'active' : ''
-              }`}
-            >
-              <WavyWord text="Home" />
-            </button>
-
-            <button
-              onClick={() => setActiveTab('shop')}
-              className={`nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 ${
-                activeTab === 'shop' || activeTab === 'product_detail' ? 'active' : ''
-              }`}
-            >
-              <WavyWord text="AC Store" />
-            </button>
-
-            <button
-              onClick={() => setActiveTab('calculator')}
-              className={`nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 space-x-1.5 ${
-                activeTab === 'calculator' ? 'active' : ''
-              }`}
-            >
-              <Zap className="w-4 h-4 text-[#C8A96B]" />
-              <WavyWord text="Savings Calc" />
-            </button>
-
-            {/* Combined Services & Care Dropdown */}
-            <div className="relative">
+          {/* Desktop Navigation Menu */}
+          {isTechnician ? (
+            <div className="hidden md:flex items-center space-x-2.5 px-4 py-2 rounded-full bg-[#FAF7F0] dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E]">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-bold text-[#111111] dark:text-[#FAF7F0]">
+                Technician Work Order Portal
+              </span>
+              <span className="text-[10px] bg-[#111111] text-[#C8A96B] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ml-1">
+                Active Duty
+              </span>
+            </div>
+          ) : (
+            <nav className="hidden md:flex items-center space-x-1 lg:space-x-2.5">
               <button
-                onClick={() => setServicesDropdownOpen(!servicesDropdownOpen)}
-                onMouseEnter={() => setServicesDropdownOpen(true)}
-                className={`nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 space-x-1 ${
-                  ['services', 'complaints', 'amc'].includes(activeTab) ? 'active' : ''
+                onClick={() => setActiveTab('home')}
+                className={`nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 ${
+                  activeTab === 'home' ? 'active' : ''
                 }`}
               >
-                <WavyWord text="Services & Care" />
-                <ChevronDown className="w-3.5 h-3.5 opacity-60 text-[#555555]" />
+                <WavyWord text="Home" />
               </button>
 
-              {servicesDropdownOpen && (
-                <div 
-                  onMouseLeave={() => setServicesDropdownOpen(false)}
-                  className="dropdown-premium absolute top-full left-0 mt-1 w-56 bg-white dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E] rounded-2xl shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+              <button
+                onClick={() => setActiveTab('shop')}
+                className={`nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 ${
+                  activeTab === 'shop' || activeTab === 'product_detail' ? 'active' : ''
+                }`}
+              >
+                <WavyWord text="AC Store" />
+              </button>
+
+              <button
+                onClick={() => setActiveTab('calculator')}
+                className={`nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 space-x-1.5 ${
+                  activeTab === 'calculator' ? 'active' : ''
+                }`}
+              >
+                <Zap className="w-4 h-4 text-[#C8A96B]" />
+                <WavyWord text="Savings Calc" />
+              </button>
+
+              {/* Combined Services & Care Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setServicesDropdownOpen(!servicesDropdownOpen)}
+                  onMouseEnter={() => setServicesDropdownOpen(true)}
+                  className={`nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 space-x-1 ${
+                    ['services', 'complaints', 'amc'].includes(activeTab) ? 'active' : ''
+                  }`}
                 >
-                  <button
-                    onClick={() => { setActiveTab('services'); setServicesDropdownOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-xs text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 font-medium transition-colors"
-                  >
-                    <Wrench className="w-4 h-4 text-[#C8A96B]" />
-                    <span>🔧 Book AC Service & Repair</span>
-                  </button>
+                  <WavyWord text="Services & Care" />
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60 text-[#555555]" />
+                </button>
 
-                  <button
-                    onClick={() => { setActiveTab('complaints'); setServicesDropdownOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-xs text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 font-medium transition-colors"
+                {servicesDropdownOpen && (
+                  <div 
+                    onMouseLeave={() => setServicesDropdownOpen(false)}
+                    className="dropdown-premium absolute top-full left-0 mt-1 w-56 bg-white dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E] rounded-2xl shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
                   >
-                    <AlertTriangle className="w-4 h-4 text-[#C8A96B]" />
-                    <span>📢 Raise Complaint Ticket</span>
-                  </button>
+                    <button
+                      onClick={() => { setActiveTab('services'); setServicesDropdownOpen(false); }}
+                      className="w-full text-left px-4 py-2.5 text-xs text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 font-medium transition-colors"
+                    >
+                      <Wrench className="w-4 h-4 text-[#C8A96B]" />
+                      <span>🔧 Book AC Service & Repair</span>
+                    </button>
 
-                  <button
-                    onClick={() => { setActiveTab('amc'); setServicesDropdownOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-xs text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 font-medium border-t border-[#E2E0DB] dark:border-[#2E2E2E] pt-2 transition-colors"
-                  >
-                    <Calendar className="w-4 h-4 text-[#C8A96B]" />
-                    <span>📅 AMC Maintenance Plans</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </nav>
+                    <button
+                      onClick={() => { setActiveTab('complaints'); setServicesDropdownOpen(false); }}
+                      className="w-full text-left px-4 py-2.5 text-xs text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 font-medium transition-colors"
+                    >
+                      <AlertTriangle className="w-4 h-4 text-[#C8A96B]" />
+                      <span>📢 Raise Complaint Ticket</span>
+                    </button>
+
+                    <button
+                      onClick={() => { setActiveTab('amc'); setServicesDropdownOpen(false); }}
+                      className="w-full text-left px-4 py-2.5 text-xs text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 font-medium border-t border-[#E2E0DB] dark:border-[#2E2E2E] pt-2 transition-colors"
+                    >
+                      <Calendar className="w-4 h-4 text-[#C8A96B]" />
+                      <span>📅 AMC Maintenance Plans</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </nav>
+          )}
 
           {/* Right Action Icons Group */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             
             {/* Compare Counter Badge */}
-            {compareItems.length > 0 && (
+            {!isTechnician && compareItems.length > 0 && (
               <button 
                 onClick={() => setActiveTab('shop')}
                 className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-[#FAF7F0] dark:bg-[#1A1A1A] text-[#111111] dark:text-[#C8A96B] border border-[#E2E0DB] dark:border-[#2E2E2E] text-xs font-bold hover:border-[#C8A96B] transition"
@@ -254,18 +280,20 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
             )}
 
             {/* Shopping Cart Icon */}
-            <button 
-              onClick={onOpenCart}
-              className="relative p-2.5 rounded-xl text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] transition duration-200"
-              title="Shopping Cart"
-            >
-              <ShoppingCart className="w-5 h-5 text-[#111111] dark:text-[#F7F6F2]" />
-              {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-[#C8A96B] text-[#111111] font-black rounded-full text-[10px] flex items-center justify-center px-1 shadow-sm">
-                  {cartItemCount}
-                </span>
-              )}
-            </button>
+            {!isTechnician && (
+              <button 
+                onClick={onOpenCart}
+                className="relative p-2.5 rounded-xl text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] transition duration-200"
+                title="Shopping Cart"
+              >
+                <ShoppingCart className="w-5 h-5 text-[#111111] dark:text-[#F7F6F2]" />
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-[#C8A96B] text-[#111111] font-black rounded-full text-[10px] flex items-center justify-center px-1 shadow-sm">
+                    {cartItemCount}
+                  </span>
+                )}
+              </button>
+            )}
 
             {/* Notification Bell */}
             {currentUser && (
@@ -424,19 +452,21 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
                       </button>
                     )}
 
-                    {/* Requirement 4: My Orders */}
-                    <button
-                      onClick={() => { 
-                        setActiveTab('dashboard'); 
-                        setAccountDropdownOpen(false); 
-                      }}
-                      className="w-full text-left px-4 py-2 text-xs font-semibold text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 transition-colors"
-                    >
-                      <ShoppingCart className="w-4 h-4 text-[#C8A96B]" />
-                      <span>My Orders</span>
-                    </button>
+                    {/* My Orders (Customer & Admin only) */}
+                    {!isTechnician && (
+                      <button
+                        onClick={() => { 
+                          setActiveTab('dashboard'); 
+                          setAccountDropdownOpen(false); 
+                        }}
+                        className="w-full text-left px-4 py-2 text-xs font-semibold text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 transition-colors"
+                      >
+                        <ShoppingCart className="w-4 h-4 text-[#C8A96B]" />
+                        <span>My Orders</span>
+                      </button>
+                    )}
 
-                    {/* Requirement 4: Logout */}
+                    {/* Logout */}
                     <div className="pt-1.5 mt-1.5 border-t border-[#E2E0DB] dark:border-[#2E2E2E]">
                       <button
                         onClick={() => { 
@@ -508,42 +538,63 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
             </div>
           )}
 
-          <button
-            onClick={() => { setActiveTab('home'); setMobileMenuOpen(false); }}
-            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'home' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
-          >
-            Home
-          </button>
-          <button
-            onClick={() => { setActiveTab('shop'); setMobileMenuOpen(false); }}
-            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'shop' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
-          >
-            🛒 AC Store
-          </button>
-          <button
-            onClick={() => { setActiveTab('calculator'); setMobileMenuOpen(false); }}
-            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'calculator' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
-          >
-            ⚡ Energy & Savings Calculator
-          </button>
-          <button
-            onClick={() => { setActiveTab('services'); setMobileMenuOpen(false); }}
-            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'services' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
-          >
-            🔧 AC Services & Repair
-          </button>
-          <button
-            onClick={() => { setActiveTab('complaints'); setMobileMenuOpen(false); }}
-            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'complaints' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
-          >
-            📢 Complaints & Escalation
-          </button>
-          <button
-            onClick={() => { setActiveTab('amc'); setMobileMenuOpen(false); }}
-            className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'amc' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
-          >
-            📅 AMC Protection Plans
-          </button>
+          {isTechnician ? (
+            <div className="space-y-2 pt-1">
+              <div className="p-3 bg-[#FAF7F0] dark:bg-[#202020] rounded-xl border border-[#E2E0DB] dark:border-[#2E2E2E] text-xs text-[#555555] dark:text-[#858585] space-y-1">
+                <div className="font-bold text-[#111111] dark:text-white flex items-center space-x-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Technician Field Workspace</span>
+                </div>
+                <p>Website shopping and customer tools are restricted during technician duty.</p>
+              </div>
+              <button
+                onClick={() => { setActiveTab('technician'); setMobileMenuOpen(false); }}
+                className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-bold bg-[#111111] text-[#C8A96B] flex items-center space-x-2"
+              >
+                <Wrench className="w-4 h-4 text-[#C8A96B]" />
+                <span>Service Man Field Portal</span>
+              </button>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={() => { setActiveTab('home'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'home' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
+              >
+                Home
+              </button>
+              <button
+                onClick={() => { setActiveTab('shop'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'shop' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
+              >
+                🛒 AC Store
+              </button>
+              <button
+                onClick={() => { setActiveTab('calculator'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'calculator' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
+              >
+                ⚡ Energy & Savings Calculator
+              </button>
+              <button
+                onClick={() => { setActiveTab('services'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'services' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
+              >
+                🔧 AC Services & Repair
+              </button>
+              <button
+                onClick={() => { setActiveTab('complaints'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'complaints' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
+              >
+                📢 Complaints & Escalation
+              </button>
+              <button
+                onClick={() => { setActiveTab('amc'); setMobileMenuOpen(false); }}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'amc' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
+              >
+                📅 AMC Protection Plans
+              </button>
+            </>
+          )}
         </div>
       )}
     </header>
