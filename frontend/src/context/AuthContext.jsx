@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { signInWithGooglePopup, firebaseLogout } from '../services/firebase';
 
 const AuthContext = createContext();
 
@@ -53,10 +54,42 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const googleUser = await signInWithGooglePopup();
+      const user = await api.googleLogin({
+        name: googleUser.name,
+        email: googleUser.email,
+        photo_url: googleUser.photo_url,
+        uid: googleUser.uid
+      });
+      const completeUser = {
+        ...user,
+        photo_url: googleUser.photo_url
+      };
+      setCurrentUser(completeUser);
+      localStorage.setItem('coolinghub_user', JSON.stringify(completeUser));
+      if (pendingAction) {
+        pendingAction();
+        setPendingAction(null);
+      }
+      setAuthModalOpen(false);
+      return completeUser;
+    } catch (e) {
+      console.error("Google sign-in failed:", e);
+      throw e;
+    }
+  };
+
   const logout = () => {
     setCurrentUser(null);
     localStorage.removeItem('coolinghub_user');
     setPendingAction(null);
+    try {
+      firebaseLogout();
+    } catch (e) {
+      // ignore
+    }
   };
 
   const switchRole = async (role) => {
@@ -99,6 +132,7 @@ export function AuthProvider({ children }) {
       setCurrentUser, 
       login, 
       register, 
+      loginWithGoogle,
       logout, 
       switchRole,
       authModalOpen,

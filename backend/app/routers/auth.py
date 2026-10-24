@@ -116,3 +116,39 @@ def get_profile(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+class GoogleLoginRequest(BaseModel):
+    name: Optional[str] = "Customer"
+    email: str
+    photo_url: Optional[str] = None
+    uid: Optional[str] = None
+
+@router.post("/google", response_model=UserResponse)
+def google_login(req: GoogleLoginRequest, db: Session = Depends(get_db)):
+    clean_email = req.email.strip().lower()
+    if not clean_email or "@" not in clean_email:
+        raise HTTPException(status_code=400, detail="A valid email address is required.")
+        
+    user = db.query(User).filter(func.lower(User.email) == clean_email).first()
+    
+    if not user:
+        display_name = (req.name or "").strip() or clean_email.split("@")[0].replace(".", " ").title()
+        user = User(
+            name=display_name,
+            email=clean_email,
+            password="google_oauth_user",
+            phone="+91 9876543210",
+            role="customer",
+            address="New Delhi, India"
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    else:
+        if req.name and req.name.strip() and user.name in ["Customer", clean_email.split("@")[0]]:
+            user.name = req.name.strip()
+            db.commit()
+            db.refresh(user)
+            
+    return user
+
+
