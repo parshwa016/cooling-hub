@@ -75,7 +75,7 @@ export const api = {
   updateTechnicianJob: (jobId, data) => request(`/technician/jobs/${jobId}/update`, { method: 'POST', body: JSON.stringify(data) }),
 
   // Chatbot
-  queryChatbot: (message, userId = null) => request('/chatbot/query', { method: 'POST', body: JSON.stringify({ message, user_id: userId }) }),
+  queryChatbot: (message, userId = null, context = null) => request('/chatbot/query', { method: 'POST', body: JSON.stringify({ message, user_id: userId, context }) }),
 
   // Admin
   getAdminAnalytics: () => request('/admin/analytics'),
