@@ -8,7 +8,7 @@ export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [compareItems, setCompareItems] = useState([]);
-  const [pincode, setPincode] = useState('110001');
+  const [pincode, setPincode] = useState('380015');
 
   const addToCart = (product, quantity = 1) => {
     setCart((prev) => {

@@ -8,7 +8,56 @@ from app.schemas import ServiceResponse, ServiceBookingCreate, ServiceBookingRes
 
 router = APIRouter(prefix="/api/services", tags=["AC Services"])
 
-SERVICEABLE_PINCODES = ["110001", "110002", "110003", "110016", "110020", "201301", "201309", "122001", "122002", "400001", "560001"]
+# ==============================================================================
+# VERIFIED AHMEDABAD PINCODES & LOCALITIES (COOLING HUB OPERATIONAL ZONE)
+# ==============================================================================
+AHMEDABAD_PINCODES = {
+    "380001": "Bhadra / Lal Darwaja / G.P.O.",
+    "380002": "Kalupur / Railway Station",
+    "380004": "Shahibaug / Delhi Darwaja",
+    "380005": "Sabarmati / Chandkheda",
+    "380006": "Ellisbridge / Ambawadi",
+    "380007": "Paldi / Sharda Mandir",
+    "380008": "Maninagar / Kankaria Lake",
+    "380009": "Navrangpura / Ashram Road / University",
+    "380013": "Naranpura / Vadaj",
+    "380014": "Navjivan / Usmanpura",
+    "380015": "Vastrapur / Satellite / Bodakdev",
+    "380016": "Civil Hospital / Asarwa",
+    "380018": "Saraspur / Gomtipur",
+    "380019": "Vatva Industrial Estate",
+    "380021": "Amraiwadi / C.T.M.",
+    "380022": "Bapunagar / Rakhial",
+    "380024": "Odhav GIDC",
+    "380026": "Danilimda / Isanpur",
+    "380027": "Ranip / New Ranip",
+    "380028": "Naroda / Krishnanagar",
+    "380050": "Ghodasar / Isanpur",
+    "380051": "Prahlad Nagar / Makarba / Vejalpur",
+    "380052": "Memnagar / Gurukul / Drive-In",
+    "380054": "Thaltej / S.G. Highway / Science City",
+    "380058": "Bopal / South Bopal / Ghuma",
+    "380059": "Gota / Chandlodiya",
+    "380060": "Motera / Narendra Modi Stadium",
+    "380061": "Ghatlodiya / Chanakyapuri",
+    "380063": "Science City / Sola",
+    "382421": "Chandkheda / Zundal",
+    "382424": "Naroda GIDC",
+    "382443": "Vatva GIDC Phase IV",
+    "382481": "Sanand / Extended S.G. Road",
+    "382110": "Sanand Industrial Area",
+    "382445": "Ramol / C.T.M."
+}
+
+def is_ahmedabad_pincode(pincode: str) -> bool:
+    clean_pin = str(pincode).strip()
+    if not (len(clean_pin) == 6 and clean_pin.isdigit()):
+        return False
+    # Ahmedabad city pincodes 380001 - 380099
+    if clean_pin.startswith("380"):
+        return True
+    # Or listed Ahmedabad suburban/GIDC areas
+    return clean_pin in AHMEDABAD_PINCODES
 
 @router.get("", response_model=List[ServiceResponse])
 def get_services(db: Session = Depends(get_db)):
@@ -16,15 +65,41 @@ def get_services(db: Session = Depends(get_db)):
 
 @router.get("/check-pincode/{pincode}")
 def check_pincode(pincode: str):
-    # Check 6-digit valid format, allow all valid 6-digit pincodes for great demo experience
-    if len(pincode) == 6 and pincode.isdigit():
-        is_serviceable = True
-        est_arrival = "Same-Day Service Available" if pincode in SERVICEABLE_PINCODES else "Service Available within 24 Hours"
-        return {"serviceable": is_serviceable, "pincode": pincode, "delivery_time": est_arrival, "message": "Good news! Cooling Hub technicians are active in your area."}
-    return {"serviceable": False, "pincode": pincode, "message": "Please enter a valid 6-digit Indian Pincode."}
+    clean_pin = str(pincode).strip()
+    if not (len(clean_pin) == 6 and clean_pin.isdigit()):
+        return {
+            "serviceable": False,
+            "pincode": clean_pin,
+            "message": "Please enter a valid 6-digit Indian Pincode (e.g. 380015 for Vastrapur, Ahmedabad)."
+        }
+
+    if is_ahmedabad_pincode(clean_pin):
+        area = AHMEDABAD_PINCODES.get(clean_pin, "Ahmedabad City")
+        return {
+            "serviceable": True,
+            "pincode": clean_pin,
+            "city": "Ahmedabad",
+            "area": area,
+            "delivery_time": "Same-Day Service Available (within 2-4 Hours)",
+            "message": f"🎉 Excellent! Cooling Hub doorstep technicians are active in {area}, Ahmedabad ({clean_pin})."
+        }
+
+    # Entered a pincode outside Ahmedabad
+    return {
+        "serviceable": False,
+        "pincode": clean_pin,
+        "city": "Ahmedabad Only",
+        "message": f"❌ We're sorry! Cooling Hub services are currently ONLY available in Ahmedabad. We are not available at pincode {clean_pin} yet."
+    }
 
 @router.post("/book", response_model=ServiceBookingResponse)
 def book_service(req: ServiceBookingCreate, db: Session = Depends(get_db)):
+    # Validate that the requested pincode is in Ahmedabad
+    if not is_ahmedabad_pincode(req.pincode):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cooling Hub doorstep services are currently only available in Ahmedabad. Pincode {req.pincode} is outside our current service area."
+        )
     service = db.query(Service).filter(Service.id == req.service_id).first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
