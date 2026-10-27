@@ -28,7 +28,10 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup_db_seed():
-    seed_database()
+    try:
+        seed_database()
+    except Exception as e:
+        print("Startup database seed notice:", e)
 
 app.include_router(auth.router)
 app.include_router(products.router)
