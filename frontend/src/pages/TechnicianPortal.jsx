@@ -127,7 +127,10 @@ export default function TechnicianPortal() {
           </span>
           <span className="text-[11px] text-[#858585] font-semibold">Service Man App</span>
         </div>
-        <h1 className="text-xl sm:text-2xl font-black tracking-tight">👨‍🔧 Service Man Field Portal</h1>
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight flex items-center space-x-2.5">
+          <Wrench className="w-6 h-6 text-[#C8A96B]" />
+          <span>Service Man Field Portal</span>
+        </h1>
         <p className="text-xs text-[#858585] max-w-2xl font-normal leading-relaxed">
           Welcome back, <strong className="text-white">{currentUser.name}</strong>! View your assigned customer service calls, update job status in real time, and submit verified digital completion reports.
         </p>

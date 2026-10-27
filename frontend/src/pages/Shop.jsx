@@ -76,7 +76,10 @@ export default function Shop({ setActiveTab, onSelectProduct }) {
       {/* Top Search & Header */}
       <div className="bg-white dark:bg-[#1A1A1A] p-6 sm:p-8 rounded-3xl border border-[#E2E0DB] dark:border-[#2E2E2E] shadow-sm">
         <div className="w-full space-y-4">
-          <h1 className="text-3xl sm:text-4xl font-black text-[#111111] dark:text-white">🛒 AC Shopping Store</h1>
+          <h1 className="text-3xl sm:text-4xl font-black text-[#111111] dark:text-white flex items-center space-x-3">
+            <ShoppingCart className="w-8 h-8 text-[#C8A96B]" />
+            <span>AC Shopping Store</span>
+          </h1>
           <p className="text-xs sm:text-sm text-[#555555] dark:text-[#858585]">
             Browse genuine multi-brand Inverter & Window ACs with official warranty, free installation kit, and zero cost EMI options.
           </p>

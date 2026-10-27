@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Snowflake, Zap, Wrench, ShieldCheck, ArrowRight, Star, 
   Sparkles, CheckCircle2, Search, Flame, MapPin, PhoneCall, Scale, TrendingUp,
-  Volume2, Sliders, Wind, Gauge, Activity, Check
+  Volume2, Sliders, Wind, Gauge, Activity, Check, ShoppingCart, AlertTriangle, Calendar, RefreshCw
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
@@ -33,14 +33,14 @@ export default function Home({ setActiveTab, onSelectProduct }) {
   }, []);
 
   const businessFlowSteps = [
-    { title: 'Buy AC', icon: '🛒', desc: 'Top Tier Brands' },
-    { title: 'Installation', icon: '🔩', desc: 'Free Next-Day' },
-    { title: 'Warranty', icon: '🛡️', desc: '10-Yr Digital' },
-    { title: 'Service', icon: '🧹', desc: 'Foam Jet Wash' },
-    { title: 'Complaint', icon: '📢', desc: 'Fast Resolution' },
-    { title: 'Repair', icon: '🔧', desc: 'OEM Genuine' },
-    { title: 'AMC', icon: '📅', desc: 'Zero Stress Care' },
-    { title: 'Renewal', icon: '🔄', desc: '1-Click Ext.' },
+    { title: 'Buy AC', icon: ShoppingCart, desc: 'Top Tier Brands' },
+    { title: 'Installation', icon: Wrench, desc: 'Free Next-Day' },
+    { title: 'Warranty', icon: ShieldCheck, desc: '10-Yr Digital' },
+    { title: 'Service', icon: Sparkles, desc: 'Foam Jet Wash' },
+    { title: 'Complaint', icon: AlertTriangle, desc: 'Fast Resolution' },
+    { title: 'Repair', icon: Wrench, desc: 'OEM Genuine' },
+    { title: 'AMC', icon: Calendar, desc: 'Zero Stress Care' },
+    { title: 'Renewal', icon: RefreshCw, desc: '1-Click Ext.' },
   ];
 
   const brandsList = [
@@ -399,16 +399,21 @@ export default function Home({ setActiveTab, onSelectProduct }) {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
-          {businessFlowSteps.map((step, idx) => (
-            <div 
-              key={idx}
-              className="bg-white dark:bg-[#1A1A1A] p-4 rounded-2xl border border-[#E2E0DB] dark:border-[#2E2E2E] text-center shadow-sm hover:shadow-md hover:border-[#C8A96B] hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
-            >
-              <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-300">{step.icon}</div>
-              <h4 className="font-black text-xs sm:text-sm text-[#111111] dark:text-[#F7F6F2]">{step.title}</h4>
-              <p className="text-[10px] text-[#555555] dark:text-[#858585] mt-0.5">{step.desc}</p>
-            </div>
-          ))}
+          {businessFlowSteps.map((step, idx) => {
+            const IconComponent = step.icon;
+            return (
+              <div 
+                key={idx}
+                className="bg-white dark:bg-[#1A1A1A] p-4 rounded-2xl border border-[#E2E0DB] dark:border-[#2E2E2E] text-center shadow-sm hover:shadow-md hover:border-[#C8A96B] hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+              >
+                <div className="w-10 h-10 mx-auto mb-2.5 rounded-xl bg-[#FAF7F0] dark:bg-[#252525] flex items-center justify-center group-hover:scale-110 group-hover:bg-[#C8A96B]/15 transition-all duration-300">
+                  <IconComponent className="w-5 h-5 text-[#C8A96B]" />
+                </div>
+                <h4 className="font-black text-xs sm:text-sm text-[#111111] dark:text-[#F7F6F2]">{step.title}</h4>
+                <p className="text-[10px] text-[#555555] dark:text-[#858585] mt-0.5">{step.desc}</p>
+              </div>
+            );
+          })}
         </div>
       </section>
 

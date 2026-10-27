@@ -117,7 +117,10 @@ export default function Services({ setActiveTab }) {
             <span>EXCLUSIVELY SERVICING AHMEDABAD</span>
           </span>
         </div>
-        <h1 className="text-xl sm:text-2xl font-black">🔧 Doorstep AC Services & Repairs</h1>
+        <h1 className="text-xl sm:text-2xl font-black flex items-center space-x-2">
+          <Wrench className="w-6 h-6 text-[#C8A96B]" />
+          <span>Doorstep AC Services & Repairs</span>
+        </h1>
         <p className="text-xs text-[#E2E0DB] max-w-2xl font-normal leading-relaxed">
           Background-verified certified HVAC engineers serving homes and offices across Ahmedabad. High-pressure foam jet wash, installation, dismantling, gas refill, and rapid breakdown troubleshooting.
         </p>

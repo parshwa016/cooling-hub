@@ -633,7 +633,10 @@ export default function AdminDashboard({ setActiveTab }) {
           </span>
           <span className="text-[11px] text-[#858585] font-semibold">Cooling Hub Central Admin</span>
         </div>
-        <h1 className="text-xl sm:text-2xl font-black tracking-tight">🧑‍💼 Admin Control Dashboard</h1>
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight flex items-center space-x-2.5">
+          <ShieldCheck className="w-6 h-6 text-[#C8A96B]" />
+          <span>Admin Control Dashboard</span>
+        </h1>
         <p className="text-xs text-[#858585] max-w-3xl font-normal leading-relaxed">
           Manage the AC Store catalog, configure AC service packages, manage AMC maintenance plans, oversee doorstep service bookings, and review revenue analytics.
         </p>
@@ -1354,19 +1357,28 @@ export default function AdminDashboard({ setActiveTab }) {
                 <div className="bg-white dark:bg-[#1A1A1A] p-4 sm:p-5 rounded-2xl border border-[#E2E0DB] dark:border-[#292929] shadow-sm">
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#858585]">Total Sales Revenue</span>
                   <h3 className="text-lg sm:text-xl font-black text-[#111111] dark:text-white mt-1">₹{analytics.kpis.total_sales_revenue.toLocaleString()}</h3>
-                  <p className="text-xs text-[#C8A96B] font-bold mt-1">🛒 {analytics.kpis.total_orders} Orders</p>
+                  <p className="text-xs text-[#C8A96B] font-bold mt-1 flex items-center space-x-1">
+                    <Package className="w-3.5 h-3.5 inline text-[#C8A96B]" />
+                    <span>{analytics.kpis.total_orders} Orders</span>
+                  </p>
                 </div>
 
                 <div className="bg-white dark:bg-[#1A1A1A] p-4 sm:p-5 rounded-2xl border border-[#E2E0DB] dark:border-[#292929] shadow-sm">
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#858585]">Service Revenue</span>
                   <h3 className="text-lg sm:text-xl font-black text-[#111111] dark:text-white mt-1">₹{analytics.kpis.total_service_revenue.toLocaleString()}</h3>
-                  <p className="text-xs text-[#C8A96B] font-bold mt-1">🔧 {analytics.kpis.total_bookings} Service Bookings</p>
+                  <p className="text-xs text-[#C8A96B] font-bold mt-1 flex items-center space-x-1">
+                    <Wrench className="w-3.5 h-3.5 inline text-[#C8A96B]" />
+                    <span>{analytics.kpis.total_bookings} Service Bookings</span>
+                  </p>
                 </div>
 
                 <div className="bg-white dark:bg-[#1A1A1A] p-4 sm:p-5 rounded-2xl border border-[#E2E0DB] dark:border-[#292929] shadow-sm">
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#858585]">AMC Revenue</span>
                   <h3 className="text-lg sm:text-xl font-black text-[#111111] dark:text-white mt-1">₹{analytics.kpis.total_amc_revenue.toLocaleString()}</h3>
-                  <p className="text-xs text-[#C8A96B] font-bold mt-1">📅 {analytics.kpis.active_amc_subscriptions} Active AMCs</p>
+                  <p className="text-xs text-[#C8A96B] font-bold mt-1 flex items-center space-x-1">
+                    <Calendar className="w-3.5 h-3.5 inline text-[#C8A96B]" />
+                    <span>{analytics.kpis.active_amc_subscriptions} Active AMCs</span>
+                  </p>
                 </div>
 
                 <div className="bg-[#111111] text-white p-4 sm:p-5 rounded-2xl shadow-md border border-[#C8A96B]/30">

@@ -337,7 +337,10 @@ export default function Complaints({ setActiveTab }) {
         <span className="px-2.5 py-0.5 bg-[#C8A96B] text-[#111111] text-[11px] font-black rounded-full uppercase tracking-wider">
           FAST-TRACK REPAIR DISPATCH
         </span>
-        <h1 className="text-xl sm:text-2xl font-black tracking-tight">📢 Complaint & Escalation Desk</h1>
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight flex items-center space-x-2">
+          <AlertTriangle className="w-6 h-6 text-[#C8A96B]" />
+          <span>Complaint & Escalation Desk</span>
+        </h1>
         <p className="text-xs text-[#858585] max-w-2xl font-normal leading-relaxed">
           Experiencing cooling issues, water leakage, or electrical compressor tripping? Register your service complaint for priority technician dispatch within 4 hours.
         </p>

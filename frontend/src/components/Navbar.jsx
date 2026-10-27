@@ -240,7 +240,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
                       className="w-full text-left px-4 py-2.5 text-xs text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 font-medium transition-colors"
                     >
                       <Wrench className="w-4 h-4 text-[#C8A96B]" />
-                      <span>🔧 Book AC Service & Repair</span>
+                      <span>Book AC Service & Repair</span>
                     </button>
 
                     <button
@@ -248,7 +248,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
                       className="w-full text-left px-4 py-2.5 text-xs text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 font-medium transition-colors"
                     >
                       <AlertTriangle className="w-4 h-4 text-[#C8A96B]" />
-                      <span>📢 Raise Complaint Ticket</span>
+                      <span>Raise Complaint Ticket</span>
                     </button>
 
                     <button
@@ -256,7 +256,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
                       className="w-full text-left px-4 py-2.5 text-xs text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525] hover:text-[#111111] flex items-center space-x-2.5 font-medium border-t border-[#E2E0DB] dark:border-[#2E2E2E] pt-2 transition-colors"
                     >
                       <Calendar className="w-4 h-4 text-[#C8A96B]" />
-                      <span>📅 AMC Maintenance Plans</span>
+                      <span>AMC Maintenance Plans</span>
                     </button>
                   </div>
                 )}
@@ -565,33 +565,38 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
               </button>
               <button
                 onClick={() => { setActiveTab('shop'); setMobileMenuOpen(false); }}
-                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'shop' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold flex items-center space-x-2.5 ${activeTab === 'shop' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
               >
-                🛒 AC Store
+                <ShoppingCart className="w-4 h-4 text-[#C8A96B]" />
+                <span>AC Store</span>
               </button>
               <button
                 onClick={() => { setActiveTab('calculator'); setMobileMenuOpen(false); }}
-                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'calculator' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold flex items-center space-x-2.5 ${activeTab === 'calculator' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
               >
-                ⚡ Energy & Savings Calculator
+                <Zap className="w-4 h-4 text-[#C8A96B]" />
+                <span>Energy & Savings Calculator</span>
               </button>
               <button
                 onClick={() => { setActiveTab('services'); setMobileMenuOpen(false); }}
-                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'services' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold flex items-center space-x-2.5 ${activeTab === 'services' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
               >
-                🔧 AC Services & Repair
+                <Wrench className="w-4 h-4 text-[#C8A96B]" />
+                <span>Book AC Service & Repair</span>
               </button>
               <button
                 onClick={() => { setActiveTab('complaints'); setMobileMenuOpen(false); }}
-                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'complaints' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold flex items-center space-x-2.5 ${activeTab === 'complaints' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
               >
-                📢 Complaints & Escalation
+                <AlertTriangle className="w-4 h-4 text-[#C8A96B]" />
+                <span>Raise Complaint Ticket</span>
               </button>
               <button
                 onClick={() => { setActiveTab('amc'); setMobileMenuOpen(false); }}
-                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold ${activeTab === 'amc' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold flex items-center space-x-2.5 ${activeTab === 'amc' ? 'bg-[#FAF7F0] dark:bg-[#252525] text-[#111111] dark:text-[#C8A96B]' : 'text-[#111111] dark:text-[#F7F6F2]'}`}
               >
-                📅 AMC Protection Plans
+                <Calendar className="w-4 h-4 text-[#C8A96B]" />
+                <span>AMC Maintenance Plans</span>
               </button>
             </>
           )}

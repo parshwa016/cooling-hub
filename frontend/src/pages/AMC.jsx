@@ -80,7 +80,10 @@ export default function AMC({ setActiveTab }) {
       {/* Header */}
       <div className="bg-[#111111] text-white p-5 sm:p-6 rounded-2xl border border-[#292929] shadow-sm space-y-2.5">
         <span className="px-2.5 py-0.5 bg-[#C8A96B] text-[#111111] text-[11px] font-black rounded-full uppercase tracking-wider">ANNUAL MAINTENANCE CONTRACT</span>
-        <h1 className="text-xl sm:text-2xl font-black tracking-tight">📅 AMC Protection Plans</h1>
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight flex items-center space-x-2">
+          <Calendar className="w-6 h-6 text-[#C8A96B]" />
+          <span>AMC Protection Plans</span>
+        </h1>
         <p className="text-xs text-[#858585] max-w-2xl font-normal leading-relaxed">
           Zero maintenance worries! Enjoy scheduled foam jet cleaning, free gas charging, 24/7 priority technician assistance, and discounted spare parts.
         </p>
