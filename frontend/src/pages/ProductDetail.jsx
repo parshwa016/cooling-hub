@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Star, ShoppingCart, Heart, Scale, ShieldCheck, 
-  Zap, Volume2, Award, CheckCircle2, MessageSquare, ArrowLeft, RefreshCw 
+  Zap, Volume2, Award, CheckCircle2, MessageSquare, ArrowLeft, RefreshCw,
+  Camera, Sparkles, Eye
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import RatingStars from '../components/RatingStars';
 import LuxurySelect from '../components/LuxurySelect';
+import RoomVisualizerModal from '../components/RoomVisualizerModal';
 
 export default function ProductDetail({ productId, setActiveTab }) {
   const { currentUser, openAuthModal } = useAuth();
@@ -18,6 +20,7 @@ export default function ProductDetail({ productId, setActiveTab }) {
   const [reviewTitle, setReviewTitle] = useState('');
   const [reviewComment, setReviewComment] = useState('');
   const [submitMsg, setSubmitMsg] = useState('');
+  const [visualizerOpen, setVisualizerOpen] = useState(false);
 
   const { addToCart, wishlist, toggleWishlist, compareItems, toggleCompare } = useCart();
 
@@ -95,9 +98,20 @@ export default function ProductDetail({ productId, setActiveTab }) {
               className="w-full h-full object-cover"
               onError={(e) => { e.target.src = '/images/products/daikin_split.jpg'; }}
             />
+            
+            {/* Top Badge */}
             <span className="absolute top-4 left-4 px-3.5 py-1.5 bg-white/95 dark:bg-[#1A1A1A]/95 border border-[#E2E0DB] text-[#111111] dark:text-[#C8A96B] font-black text-xs sm:text-sm rounded-full shadow-sm">
               ★ {product.star_rating} Star {product.is_inverter ? 'Inverter' : 'Fixed Speed'}
             </span>
+
+            {/* AR Wall Visualizer Action Trigger on Image */}
+            <button
+              onClick={() => setVisualizerOpen(true)}
+              className="absolute bottom-4 right-4 px-3.5 py-2 bg-black/85 hover:bg-black text-white text-xs font-bold rounded-xl border border-[#C8A96B]/50 backdrop-blur-md flex items-center space-x-1.5 shadow-lg transition hover:scale-105 z-10 group"
+            >
+              <Camera className="w-4 h-4 text-[#C8A96B] group-hover:rotate-12 transition-transform" />
+              <span>Visualize On Wall (AR)</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-3 gap-3 sm:gap-4">
@@ -168,8 +182,37 @@ export default function ProductDetail({ productId, setActiveTab }) {
             </div>
           </div>
 
+          {/* Room Visualizer Interactive Banner / Button */}
+          <div 
+            onClick={() => setVisualizerOpen(true)}
+            className="p-4 rounded-2xl bg-gradient-to-r from-[#111111] via-[#1E1E1E] to-[#111111] text-white border border-[#C8A96B]/50 hover:border-[#C8A96B] flex items-center justify-between shadow-lg cursor-pointer transition-all hover:scale-[1.01] group"
+          >
+            <div className="flex items-center space-x-3.5">
+              <div className="w-11 h-11 rounded-xl bg-[#C8A96B] text-[#111111] flex items-center justify-center font-bold shadow-md group-hover:rotate-6 transition-transform">
+                <Camera className="w-6 h-6" />
+              </div>
+              <div className="text-left">
+                <div className="flex items-center space-x-2">
+                  <span className="font-extrabold text-sm sm:text-base text-white">
+                    Visualize In Your Room
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-[#C8A96B] text-[#111111] text-[10px] font-black uppercase tracking-wider">
+                    AR Wall Preview
+                  </span>
+                </div>
+                <p className="text-xs text-[#C8A96B] font-medium mt-0.5">
+                  Upload your room photo to preview fit, scale & cold airflow
+                </p>
+              </div>
+            </div>
+            <button className="hidden sm:flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-[#C8A96B] text-xs font-bold transition">
+              <span>Try On Wall</span>
+              <Sparkles className="w-3.5 h-3.5 text-[#C8A96B]" />
+            </button>
+          </div>
+
           {/* CTA Buttons */}
-          <div className="flex flex-wrap gap-3.5 pt-4 border-t border-[#E2E0DB] dark:border-[#2E2E2E]">
+          <div className="flex flex-wrap gap-3.5 pt-2 border-t border-[#E2E0DB] dark:border-[#2E2E2E]">
             <button
               onClick={() => addToCart(product)}
               className="btn-emerald-primary flex-1 py-4 text-sm sm:text-base font-bold"
@@ -275,6 +318,13 @@ export default function ProductDetail({ productId, setActiveTab }) {
           </div>
         </form>
       </div>
+
+      {/* Room Visualizer Modal */}
+      <RoomVisualizerModal
+        isOpen={visualizerOpen}
+        onClose={() => setVisualizerOpen(false)}
+        initialProduct={product}
+      />
 
     </div>
   );

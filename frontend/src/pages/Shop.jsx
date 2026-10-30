@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, Filter, Scale, Heart, ShoppingCart, 
-  SlidersHorizontal, Check, RefreshCw 
+  SlidersHorizontal, Check, RefreshCw, Camera, Sparkles 
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
 import RatingStars from '../components/RatingStars';
 import ProductCompareModal from '../components/ProductCompareModal';
+import RoomVisualizerModal from '../components/RoomVisualizerModal';
 import LuxurySelect from '../components/LuxurySelect';
 
 export default function Shop({ setActiveTab, onSelectProduct }) {
@@ -19,6 +20,8 @@ export default function Shop({ setActiveTab, onSelectProduct }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('popular');
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
+  const [isVisualizerOpen, setIsVisualizerOpen] = useState(false);
+  const [visualizerProduct, setVisualizerProduct] = useState(null);
 
   const { addToCart, wishlist, toggleWishlist, compareItems, toggleCompare } = useCart();
 
@@ -222,6 +225,39 @@ export default function Shop({ setActiveTab, onSelectProduct }) {
 
         {/* Product Cards Grid */}
         <div className="lg:col-span-9 space-y-6">
+          
+          {/* Room Visualizer Interactive Promo Banner */}
+          <div 
+            onClick={() => {
+              setVisualizerProduct(products[0] || null);
+              setIsVisualizerOpen(true);
+            }}
+            className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#111111] via-[#1E1E1E] to-[#111111] border border-[#C8A96B]/50 hover:border-[#C8A96B] text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md cursor-pointer group transition-all"
+          >
+            <div className="flex items-center space-x-3.5">
+              <div className="w-12 h-12 rounded-xl bg-[#C8A96B] text-[#111111] flex items-center justify-center font-bold shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
+                <Camera className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h4 className="font-extrabold text-sm sm:text-base text-white">
+                    Unsure How the AC Will Look on Your Wall?
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-full bg-[#C8A96B] text-[#111111] text-[10px] font-black uppercase">
+                    AR Visualizer
+                  </span>
+                </div>
+                <p className="text-xs text-[#C8A96B] mt-0.5">
+                  Upload a room photo to test Daikin, LG, Voltas & Blue Star models in real scale before buying!
+                </p>
+              </div>
+            </div>
+            <button className="btn-emerald-primary px-4 py-2 text-xs font-bold whitespace-nowrap flex items-center space-x-1.5 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Launch Wall Visualizer</span>
+            </button>
+          </div>
+
           {loading ? (
             <div className="flex items-center justify-center py-20 text-[#555555] space-x-2">
               <RefreshCw className="w-5 h-5 animate-spin text-[#C8A96B]" />
@@ -270,7 +306,18 @@ export default function Shop({ setActiveTab, onSelectProduct }) {
                         </div>
 
                         {/* Top Action Icons */}
-                        <div className="absolute top-3 right-3 flex space-x-1.5">
+                        <div className="absolute top-3 right-3 flex space-x-1.5 z-10">
+                          <button
+                            onClick={() => {
+                              setVisualizerProduct(p);
+                              setIsVisualizerOpen(true);
+                            }}
+                            className="p-2 rounded-full text-xs font-bold transition shadow-sm bg-white/90 dark:bg-[#1A1A1A]/90 text-[#111111] dark:text-[#C8A96B] hover:bg-[#FAF7F0] dark:hover:bg-[#252525]"
+                            title="Visualize on Your Wall (AR)"
+                          >
+                            <Camera className="w-3.5 h-3.5 text-[#C8A96B]" />
+                          </button>
+
                           <button
                             onClick={() => toggleWishlist(p)}
                             className={`p-2 rounded-full text-xs font-bold transition shadow-sm ${
@@ -295,6 +342,18 @@ export default function Shop({ setActiveTab, onSelectProduct }) {
                             <Scale className="w-3.5 h-3.5" />
                           </button>
                         </div>
+
+                        {/* Quick "Try on Wall" pill badge on product card */}
+                        <button
+                          onClick={() => {
+                            setVisualizerProduct(p);
+                            setIsVisualizerOpen(true);
+                          }}
+                          className="absolute bottom-2.5 left-2.5 px-2.5 py-1 bg-black/85 hover:bg-black text-white text-[10px] font-bold rounded-lg border border-[#C8A96B]/40 backdrop-blur-xs flex items-center space-x-1 shadow-md transition hover:scale-105 z-10"
+                        >
+                          <Camera className="w-3 h-3 text-[#C8A96B]" />
+                          <span>Try In Room</span>
+                        </button>
                       </div>
 
                       <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
@@ -350,6 +409,12 @@ export default function Shop({ setActiveTab, onSelectProduct }) {
       <ProductCompareModal
         isOpen={isCompareModalOpen}
         onClose={() => setIsCompareModalOpen(false)}
+      />
+
+      <RoomVisualizerModal
+        isOpen={isVisualizerOpen}
+        onClose={() => setIsVisualizerOpen(false)}
+        initialProduct={visualizerProduct}
       />
 
     </div>

@@ -9,6 +9,7 @@ import Footer from './components/Footer';
 import Chatbot from './components/Chatbot';
 import CartDrawer from './components/CartDrawer';
 import AuthModal from './components/AuthModal';
+import RoomVisualizerModal from './components/RoomVisualizerModal';
 
 import Home from './pages/Home';
 import Shop from './pages/Shop';
@@ -39,6 +40,14 @@ function MainAppContent() {
 
   const [selectedProductId, setSelectedProductId] = useState(1);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isVisualizerOpen, setIsVisualizerOpen] = useState(false);
+  const [visualizerProduct, setVisualizerProduct] = useState(null);
+
+  const handleOpenVisualizer = (prod = null) => {
+    if (isTechnician) return;
+    setVisualizerProduct(prod);
+    setIsVisualizerOpen(true);
+  };
   const [scrollProgress, setScrollProgress] = useState(0);
 
   // Strictly lock technician to the Technician Field Portal
@@ -99,6 +108,7 @@ function MainAppContent() {
         onOpenCart={() => {
           if (!isTechnician) setIsCartOpen(true);
         }}
+        onOpenVisualizer={handleOpenVisualizer}
       />
 
       {/* Main Content Area */}
@@ -112,6 +122,7 @@ function MainAppContent() {
               <Home 
                 setActiveTab={handleTabChange} 
                 onSelectProduct={handleSelectProduct}
+                onOpenVisualizer={handleOpenVisualizer}
               />
             )}
 
@@ -192,6 +203,14 @@ function MainAppContent() {
           isOpen={isCartOpen}
           onClose={() => setIsCartOpen(false)}
           setActiveTab={handleTabChange}
+        />
+      )}
+
+      {!isTechnician && (
+        <RoomVisualizerModal
+          isOpen={isVisualizerOpen}
+          onClose={() => setIsVisualizerOpen(false)}
+          initialProduct={visualizerProduct}
         />
       )}
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Snowflake, Zap, Wrench, ShieldCheck, ArrowRight, Star, ExternalLink, 
+  Snowflake, Zap, Wrench, ShieldCheck, ArrowRight, Star, ExternalLink, Camera, 
   Sparkles, CheckCircle2, Search, Flame, MapPin, PhoneCall, Scale, TrendingUp,
   Volume2, Sliders, Wind, Gauge, Activity, Check, ShoppingCart, AlertTriangle, Calendar, RefreshCw
 } from 'lucide-react';
@@ -8,7 +8,7 @@ import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
 import RatingStars from '../components/RatingStars';
 
-export default function Home({ setActiveTab, onSelectProduct }) {
+export default function Home({ setActiveTab, onSelectProduct, onOpenVisualizer }) {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -216,6 +216,15 @@ export default function Home({ setActiveTab, onSelectProduct }) {
                   <Wrench className="w-4.5 h-4.5 text-[#111111] dark:text-[#C8A96B] mr-2" />
                   <span>Book Service</span>
                 </button>
+
+                <button
+                  onClick={() => onOpenVisualizer?.()}
+                  className="btn-emerald-secondary px-6 sm:px-7 py-4 text-sm sm:text-base font-bold flex items-center space-x-2 border-[#C8A96B]/50 hover:border-[#C8A96B] shadow-sm group"
+                >
+                  <Camera className="w-4.5 h-4.5 text-[#C8A96B] group-hover:rotate-12 transition-transform" />
+                  <span>AR Wall Visualizer</span>
+                  <Sparkles className="w-3.5 h-3.5 text-[#C8A96B]" />
+                </button>
               </div>
 
               {/* Trust Metric Counters */}
@@ -340,13 +349,22 @@ export default function Home({ setActiveTab, onSelectProduct }) {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => setActiveTab('shop')}
-                  className="btn-emerald-primary w-full py-3 text-xs"
-                >
-                  <span>Browse Compatible Daikin & LG Models</span>
-                  <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setActiveTab('shop')}
+                    className="btn-emerald-primary py-3 text-xs font-bold"
+                  >
+                    <span>Browse Models</span>
+                    <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                  </button>
+                  <button
+                    onClick={() => onOpenVisualizer?.(featuredProducts[0] || null)}
+                    className="btn-emerald-secondary py-3 text-xs font-bold flex items-center justify-center space-x-1.5 border-[#C8A96B]/50 hover:border-[#C8A96B]"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-[#C8A96B]" />
+                    <span>Try on Your Wall</span>
+                  </button>
+                </div>
 
               </div>
             </div>
@@ -522,6 +540,14 @@ export default function Home({ setActiveTab, onSelectProduct }) {
                       title="Compare AC"
                     >
                       <Scale className="w-3.5 h-3.5" />
+                    </button>
+                    
+                    <button
+                      onClick={() => onOpenVisualizer?.(p)}
+                      className="absolute bottom-2.5 left-2.5 px-2.5 py-1 bg-black/85 hover:bg-black text-white text-[10px] font-bold rounded-lg border border-[#C8A96B]/40 backdrop-blur-xs flex items-center space-x-1 shadow-md transition hover:scale-105 z-10"
+                    >
+                      <Camera className="w-3 h-3 text-[#C8A96B]" />
+                      <span>Try In Room</span>
                     </button>
                   </div>
 

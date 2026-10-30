@@ -3,7 +3,7 @@ import {
   Snowflake, ShoppingCart, Heart, 
   Sun, Moon, UserCheck, Wrench, ShieldCheck, ChevronDown, 
   Menu, X, Scale, User, Zap, AlertTriangle, Calendar, LogOut,
-  Bell, CheckCheck
+  Bell, CheckCheck, Camera
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -27,7 +27,7 @@ function WavyWord({ text }) {
   );
 }
 
-export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
+export default function Navbar({ activeTab, setActiveTab, onOpenCart, onOpenVisualizer }) {
   const { currentUser, logout, openAuthModal, switchRole } = useAuth();
   const isTechnician = currentUser?.role === 'technician';
   const { cartItemCount, compareItems } = useCart();
@@ -215,6 +215,15 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
               >
                 <Zap className="w-4 h-4 text-[#C8A96B]" />
                 <WavyWord text="Savings Calc" />
+              </button>
+
+              <button
+                onClick={() => onOpenVisualizer?.()}
+                className="nav-airflow-link text-sm lg:text-[15px] font-semibold px-3.5 py-2.5 space-x-1.5 text-[#111111] dark:text-[#F7F6F2] hover:text-[#C8A96B]"
+                title="Interactive Room Wall Visualizer"
+              >
+                <Camera className="w-4 h-4 text-[#C8A96B]" />
+                <WavyWord text="Room AR" />
               </button>
 
               {/* Combined Services & Care Dropdown */}
@@ -576,6 +585,13 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart }) {
               >
                 <Zap className="w-4 h-4 text-[#C8A96B]" />
                 <span>Energy & Savings Calculator</span>
+              </button>
+              <button
+                onClick={() => { onOpenVisualizer?.(); setMobileMenuOpen(false); }}
+                className="w-full text-left px-3 py-2 rounded-xl text-sm font-bold flex items-center space-x-2.5 text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] dark:hover:bg-[#252525]"
+              >
+                <Camera className="w-4 h-4 text-[#C8A96B]" />
+                <span>Room AR Wall Visualizer</span>
               </button>
               <button
                 onClick={() => { setActiveTab('services'); setMobileMenuOpen(false); }}
