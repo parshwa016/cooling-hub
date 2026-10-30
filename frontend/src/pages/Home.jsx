@@ -20,15 +20,20 @@ export default function Home({ setActiveTab, onSelectProduct }) {
   
   // Interactive Room Tonnage Recommender
   const [roomSqFt, setRoomSqFt] = useState(150);
+  const [activeTechCount, setActiveTechCount] = useState(2);
 
   useEffect(() => {
     setLoading(true);
     Promise.all([
       api.getProducts(),
-      api.getServices()
-    ]).then(([prods, srvs]) => {
+      api.getServices(),
+      api.getUsers('technician').catch(() => [])
+    ]).then(([prods, srvs, techs]) => {
       setFeaturedProducts(prods.slice(0, 4));
       setServices(srvs.slice(0, 3));
+      if (Array.isArray(techs) && techs.length > 0) {
+        setActiveTechCount(techs.length);
+      }
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
@@ -124,7 +129,7 @@ export default function Home({ setActiveTab, onSelectProduct }) {
             <div className="inline-flex items-center space-x-2.5 px-4 py-2 rounded-full bg-white dark:bg-[#252525] border border-[#E2E0DB] dark:border-[#2E2E2E] text-[#111111] dark:text-[#F7F6F2] text-xs sm:text-sm font-semibold shadow-sm">
               <span className="w-2.5 h-2.5 rounded-full bg-[#C8A96B] animate-radar" />
               <span className="font-bold text-[#111111] dark:text-[#C8A96B]">Live Operations:</span>
-              <span className="text-[#555555] dark:text-[#858585]">48 Certified Technicians Active • Avg Arrival 35 Mins</span>
+              <span className="text-[#555555] dark:text-[#858585]">{activeTechCount} Certified Technician{activeTechCount === 1 ? '' : 's'} Active • Avg Arrival 35 Mins</span>
             </div>
           </div>
 
