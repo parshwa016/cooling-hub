@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Lock, User, Mail, Phone, MapPin, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { X, Lock, User, Mail, Phone, MapPin, ArrowRight, ShieldCheck, CheckCircle2, AlertTriangle, ExternalLink, Copy, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function AuthModal() {
@@ -15,6 +15,71 @@ export default function AuthModal() {
 
   // Google sign-in state
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [copiedDomain, setCopiedDomain] = useState(false);
+
+  const handleCopyDomain = (domain) => {
+    navigator.clipboard?.writeText(domain);
+    setCopiedDomain(true);
+    setTimeout(() => setCopiedDomain(false), 2000);
+  };
+
+  const renderAlert = (error) => {
+    if (!error) return null;
+    const isDomainError = error.toLowerCase().includes('unauthorized-domain') || error.toLowerCase().includes('unauthorized domain');
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'cooling-hub.vercel.app';
+    const projectId = 'cooling-hub';
+    const firebaseSettingsUrl = `https://console.firebase.google.com/project/${projectId}/authentication/settings`;
+
+    if (isDomainError) {
+      return (
+        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-xs space-y-2.5 text-[#111111] dark:text-[#FAF7F0] animate-in fade-in">
+          <div className="flex items-center space-x-2 font-black text-amber-800 dark:text-amber-300">
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <span>Firebase Domain Authorization Required</span>
+          </div>
+          <p className="text-[11px] leading-relaxed text-[#555555] dark:text-[#E2E0DB]">
+            Google Sign-In is blocked by Firebase because <strong className="font-mono text-[#111111] dark:text-white bg-amber-200/50 dark:bg-amber-900/50 px-1.5 py-0.5 rounded">{currentHost}</strong> has not been added to your Firebase Authorized Domains yet.
+          </p>
+          <div className="bg-white/80 dark:bg-[#1A1A1A]/80 p-2.5 rounded-xl border border-amber-200 dark:border-amber-900 space-y-1.5 text-[11px]">
+            <span className="font-bold text-[#111111] dark:text-white block">How to enable in 1 minute:</span>
+            <ol className="list-decimal list-inside space-y-1 text-[#555555] dark:text-[#858585]">
+              <li>Open Firebase Console for project <strong className="text-[#111111] dark:text-white">{projectId}</strong></li>
+              <li>Go to <strong>Authentication</strong> → <strong>Settings</strong> tab → scroll to <strong>Authorized domains</strong></li>
+              <li>Click <strong>Add domain</strong> and enter: <code className="bg-amber-100 dark:bg-amber-950 px-1 py-0.5 rounded font-mono font-bold text-amber-900 dark:text-amber-200">{currentHost}</code></li>
+            </ol>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <div className="flex items-center space-x-2">
+              <a
+                href={firebaseSettingsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition shadow-xs"
+              >
+                <span>Open Firebase Settings</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+              <button
+                type="button"
+                onClick={() => handleCopyDomain(currentHost)}
+                className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-900/60 hover:bg-amber-200 text-amber-900 dark:text-amber-200 font-semibold text-[11px] transition"
+              >
+                {copiedDomain ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                <span>{copiedDomain ? 'Copied!' : 'Copy Domain'}</span>
+              </button>
+            </div>
+            <span className="text-[10px] text-[#858585]">Or use Email Login below</span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-600 dark:text-rose-400 font-semibold">
+        {error}
+      </div>
+    );
+  };
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -161,11 +226,7 @@ export default function AuthModal() {
                 </p>
               </div>
 
-              {loginError && (
-                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-600 dark:text-rose-400 font-semibold">
-                  {loginError}
-                </div>
-              )}
+              {renderAlert(loginError)}
 
               {/* Instant Google Login Option */}
               {renderGoogleButton("Sign in with Google")}
@@ -209,11 +270,7 @@ export default function AuthModal() {
                 </p>
               </div>
 
-              {loginError && (
-                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-600 dark:text-rose-400 font-semibold">
-                  {loginError}
-                </div>
-              )}
+              {renderAlert(loginError)}
 
               {/* Google Sign-In Button */}
               {renderGoogleButton("Sign in with Google")}
@@ -320,11 +377,7 @@ export default function AuthModal() {
                 </p>
               </div>
 
-              {signupError && (
-                <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-600 dark:text-rose-400 font-semibold">
-                  {signupError}
-                </div>
-              )}
+              {renderAlert(signupError)}
 
               {/* Google Sign-Up Button */}
               {renderGoogleButton("Sign up with Google")}

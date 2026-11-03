@@ -2,13 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA9o4Bzh0ztNqMvwb83AkKCDcdqbVOPc1k",
-  authDomain: "cooling-hub.firebaseapp.com",
-  projectId: "cooling-hub",
-  storageBucket: "cooling-hub.firebasestorage.app",
-  messagingSenderId: "420585150923",
-  appId: "1:420585150923:web:6ba26a509f43d5e1497e4e",
-  measurementId: "G-BKLY0ZNNT8"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyA9o4Bzh0ztNqMvwb83AkKCDcdqbVOPc1k",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "cooling-hub.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "cooling-hub",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "cooling-hub.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "420585150923",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:420585150923:web:6ba26a509f43d5e1497e4e",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-BKLY0ZNNT8"
 };
 
 // Initialize Firebase
@@ -39,6 +39,11 @@ export const signInWithGooglePopup = async () => {
       throw new Error("Another sign-in attempt was already in progress.");
     } else if (error.code === 'auth/popup-blocked') {
       throw new Error("Popup blocked by browser. Please allow popups for this site.");
+    } else if (error.code === 'auth/unauthorized-domain') {
+      const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'cooling-hub.vercel.app';
+      throw new Error(
+        `Firebase Error (auth/unauthorized-domain): The domain "${currentHost}" is not added to Firebase Authorized Domains. Please add "${currentHost}" in Firebase Console (Authentication > Settings > Authorized Domains).`
+      );
     }
     throw error;
   }
