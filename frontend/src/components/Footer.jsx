@@ -44,7 +44,7 @@ export default function Footer({ setActiveTab }) {
             </div>
             <div>
               <h4 className="font-semibold text-white text-sm sm:text-base">24/7 AI & WhatsApp</h4>
-              <p className="text-xs text-[#858585]">Direct assistance: +91 9099991453</p>
+              <p className="text-xs text-[#858585]">Instant WhatsApp & AI helpdesk</p>
             </div>
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function Footer({ setActiveTab }) {
             <div className="space-y-3 text-xs">
               <div className="flex items-center space-x-2">
                 <Phone className="w-4 h-4 text-[#C8A96B] flex-shrink-0" />
-                <span>Sales & Support: <strong>+91 90999 91453</strong></span>
+                <span>Direct Helpdesk: <strong>Parshwa Enterprise Support</strong></span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4 text-[#C8A96B] flex-shrink-0" />
@@ -108,7 +108,7 @@ export default function Footer({ setActiveTab }) {
                   rel="noreferrer"
                   className="inline-flex items-center space-x-2 px-3 py-1.5 bg-emerald-700/80 hover:bg-emerald-600 text-white border border-emerald-500/40 rounded-xl text-xs font-bold transition-all duration-200 shadow-sm"
                 >
-                  <span>Chat on WhatsApp (+91 90999 91453)</span>
+                  <span>Chat on WhatsApp</span>
                 </a>
               </div>
             </div>
