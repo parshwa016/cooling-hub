@@ -147,7 +147,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenCart, onOpenVisu
               <span className="text-[#C8A96B] font-bold">Field Service Workspace & Real-time Dispatch</span>
             </div>
           ) : (
-            <span>🎉 Summer AC Offer! Get 10% OFF with code <strong className="text-[#C8A96B] underline font-bold">COOL2026</strong> + Free Installation</span>
+            <span>🎉 Summer AC Offer! 10% OFF with code <strong className="text-[#C8A96B] underline font-bold">COOL2026</strong> + Free Installation in Ahmedabad • WhatsApp / Call: <a href="https://wa.me/919099991453" target="_blank" rel="noreferrer" className="text-[#C8A96B] hover:underline font-bold">+91 9099991453</a></span>
           )}
         </div>
 

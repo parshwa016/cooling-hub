@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Trash2, ShoppingBag, ArrowRight, Tag, Check, ShieldCheck } from 'lucide-react';
+import { X, Trash2, ShoppingBag, ArrowRight, Tag, Check, ShieldCheck, MapPin, Truck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { usePopup } from '../context/PopupContext';
@@ -15,6 +15,9 @@ export default function CartDrawer({ isOpen, onClose, setActiveTab }) {
   const [appliedCoupon, setAppliedCoupon] = useState('');
   const [couponMsg, setCouponMsg] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState(
+    currentUser?.address || 'Navrangpura, Ahmedabad, Gujarat - 380009'
+  );
 
   if (!isOpen) return null;
 
@@ -60,7 +63,7 @@ export default function CartDrawer({ isOpen, onClose, setActiveTab }) {
         total_amount: finalTotal,
         discount_amount: couponDiscount,
         coupon_used: appliedCoupon || null,
-        shipping_address: currentUser.address || "Flat 402, Green Valley Apartments, Connaught Place, New Delhi",
+        shipping_address: shippingAddress || currentUser.address || "Navrangpura, Ahmedabad, Gujarat - 380009",
         payment_method: "Online Payment (UPI/Card)"
       };
 
@@ -72,11 +75,12 @@ export default function CartDrawer({ isOpen, onClose, setActiveTab }) {
         type: 'success',
         title: 'Order Confirmed!',
         badge: 'Order Placed',
-        message: 'Your air conditioner purchase has been confirmed. Our logistics team will process dispatch and installation scheduling immediately.',
+        message: 'Your air conditioner purchase has been confirmed. Our Ahmedabad dispatch & certified installation team will contact you shortly.',
         details: {
           'Order Number': res.order_number,
           'Total Amount Paid': `₹${finalTotal.toLocaleString()}`,
           'Delivery Address': orderData.shipping_address,
+          'Dispatch Hub': 'Parshwa Enterprise, Navrangpura',
           'Payment Status': 'Paid Online (Verified)'
         },
         confirmText: 'View in My Orders'
@@ -113,7 +117,7 @@ export default function CartDrawer({ isOpen, onClose, setActiveTab }) {
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg hover:bg-[#FAF7F0] dark:hover:bg-[#111111] text-[#555555] transition"
+              className="p-1 rounded-lg hover:bg-[#FAF7F0] dark:hover:bg-[#111111] text-[#555555] transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -147,14 +151,14 @@ export default function CartDrawer({ isOpen, onClose, setActiveTab }) {
                     <div className="flex items-center space-x-2 mt-2">
                       <button
                         onClick={() => updateQuantity(item.id, -1)}
-                        className="w-6 h-6 rounded bg-[#F7F6F2] dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E] font-bold text-xs flex items-center justify-center text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0]"
+                        className="w-6 h-6 rounded bg-[#F7F6F2] dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E] font-bold text-xs flex items-center justify-center text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] cursor-pointer"
                       >
                         -
                       </button>
                       <span className="text-xs font-bold w-4 text-center text-[#111111] dark:text-white">{item.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item.id, 1)}
-                        className="w-6 h-6 rounded bg-[#F7F6F2] dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E] font-bold text-xs flex items-center justify-center text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0]"
+                        className="w-6 h-6 rounded bg-[#F7F6F2] dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E] font-bold text-xs flex items-center justify-center text-[#111111] dark:text-[#F7F6F2] hover:bg-[#FAF7F0] cursor-pointer"
                       >
                         +
                       </button>
@@ -162,7 +166,7 @@ export default function CartDrawer({ isOpen, onClose, setActiveTab }) {
                   </div>
                   <button
                     onClick={() => removeFromCart(item.id)}
-                    className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition"
+                    className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition cursor-pointer"
                     title="Remove item"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -176,6 +180,23 @@ export default function CartDrawer({ isOpen, onClose, setActiveTab }) {
           {cart.length > 0 && (
             <div className="p-4 bg-white dark:bg-[#1A1A1A] border-t border-[#E2E0DB] dark:border-[#2E2E2E] space-y-3">
               
+              {/* Delivery Address Input */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[11px] font-bold text-[#111111] dark:text-white">
+                  <span className="flex items-center space-x-1">
+                    <MapPin className="w-3.5 h-3.5 text-[#C8A96B]" />
+                    <span>Delivery Address (Ahmedabad & Suburbs):</span>
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={shippingAddress}
+                  onChange={(e) => setShippingAddress(e.target.value)}
+                  placeholder="Street / Flat / Area, Ahmedabad"
+                  className="w-full px-3 py-1.5 bg-[#F7F6F2] dark:bg-[#252525] border border-[#E2E0DB] dark:border-[#2E2E2E] rounded-xl text-xs text-[#111111] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C8A96B]"
+                />
+              </div>
+
               {/* Promo code form */}
               <form onSubmit={handleApplyCoupon} className="flex items-center space-x-2">
                 <div className="relative flex-1">
@@ -190,7 +211,7 @@ export default function CartDrawer({ isOpen, onClose, setActiveTab }) {
                 </div>
                 <button
                   type="submit"
-                  className="btn-emerald-secondary px-3 py-1.5 text-xs"
+                  className="btn-emerald-secondary px-3 py-1.5 text-xs cursor-pointer"
                 >
                   Apply
                 </button>
@@ -215,8 +236,11 @@ export default function CartDrawer({ isOpen, onClose, setActiveTab }) {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Standard Installation & Delivery:</span>
-                  <span className="text-[#C8A96B] font-bold">FREE</span>
+                  <span className="flex items-center space-x-1">
+                    <Truck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Free Express Delivery (Ahmedabad):</span>
+                  </span>
+                  <span className="text-emerald-600 font-bold">FREE (Tomorrow)</span>
                 </div>
                 <div className="flex justify-between text-sm font-black text-[#111111] dark:text-white pt-2 border-t border-[#E2E0DB] dark:border-[#2E2E2E]">
                   <span>Total Amount:</span>
@@ -227,7 +251,7 @@ export default function CartDrawer({ isOpen, onClose, setActiveTab }) {
               <button
                 onClick={handleCheckout}
                 disabled={isPlacingOrder}
-                className="btn-emerald-primary w-full py-3 text-sm flex items-center justify-center space-x-2"
+                className="btn-emerald-primary w-full py-3 text-sm flex items-center justify-center space-x-2 cursor-pointer"
               >
                 <span>{isPlacingOrder ? 'Processing Order...' : 'Proceed to Checkout (UPI/Card)'}</span>
                 <ArrowRight className="w-4 h-4 ml-1" />
@@ -235,7 +259,7 @@ export default function CartDrawer({ isOpen, onClose, setActiveTab }) {
 
               <div className="flex items-center justify-center space-x-1 text-[10px] text-[#555555] dark:text-[#858585]">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#C8A96B]" />
-                <span>100% Secure Payment • 1-Year Comprehensive Warranty Included</span>
+                <span>100% Secure Checkout • Direct Parshwa Enterprise Warranty</span>
               </div>
 
             </div>

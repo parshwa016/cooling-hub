@@ -10,6 +10,8 @@ import Chatbot from './components/Chatbot';
 import CartDrawer from './components/CartDrawer';
 import AuthModal from './components/AuthModal';
 import RoomVisualizerModal from './components/RoomVisualizerModal';
+import WhatsAppButton from './components/WhatsAppButton';
+import MobileBottomNav from './components/MobileBottomNav';
 
 import Home from './pages/Home';
 import Shop from './pages/Shop';
@@ -196,6 +198,19 @@ function MainAppContent() {
 
       {/* AI Assistant Chatbot: Hidden for technicians */}
       {!isTechnician && <Chatbot setActiveTab={handleTabChange} />}
+
+      {/* Floating WhatsApp Quick Connect (+91 90999 91453): Hidden for technicians */}
+      {!isTechnician && <WhatsAppButton />}
+
+      {/* Mobile Sticky Quick Navigation Bar: Hidden for technicians */}
+      {!isTechnician && (
+        <MobileBottomNav 
+          activeTab={activeTab} 
+          setActiveTab={handleTabChange}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenVisualizer={handleOpenVisualizer}
+        />
+      )}
 
       {/* Slide-over Cart Drawer: Hidden for technicians */}
       {!isTechnician && (

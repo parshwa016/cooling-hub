@@ -21,7 +21,12 @@ export default function Services({ setActiveTab }) {
 
   // Booking Modal state
   const [selectedService, setSelectedService] = useState(null);
-  const [serviceDate, setServiceDate] = useState('2026-09-10');
+  const getTomorrowDateStr = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  };
+  const [serviceDate, setServiceDate] = useState(getTomorrowDateStr);
   const [timeSlot, setTimeSlot] = useState('10:00 AM - 12:00 PM');
   const [address, setAddress] = useState(currentUser?.address || '');
   const [notes, setNotes] = useState('');
@@ -268,6 +273,7 @@ export default function Services({ setActiveTab }) {
                   <input
                     type="date"
                     value={serviceDate}
+                    min={getTomorrowDateStr()}
                     onChange={(e) => setServiceDate(e.target.value)}
                     className="w-full p-2.5 bg-[#F7F6F2] dark:bg-[#252525] border border-[#E2E0DB] dark:border-[#2E2E2E] rounded-xl text-[#111111] dark:text-white"
                     required

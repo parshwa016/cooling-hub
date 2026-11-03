@@ -14,7 +14,7 @@ export default function Footer({ setActiveTab }) {
             </div>
             <div>
               <h4 className="font-semibold text-white text-sm sm:text-base">100% Genuine ACs</h4>
-              <p className="text-xs text-[#858585]">Direct brand warranty & bill</p>
+              <p className="text-xs text-[#858585]">Direct brand warranty & GST bill</p>
             </div>
           </div>
 
@@ -23,8 +23,8 @@ export default function Footer({ setActiveTab }) {
               <Clock className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-semibold text-white text-sm sm:text-base">6-Hour Rapid Service</h4>
-              <p className="text-xs text-[#858585]">Verified certified technicians</p>
+              <h4 className="font-semibold text-white text-sm sm:text-base">Rapid Doorstep Service</h4>
+              <p className="text-xs text-[#858585]">Verified technicians in Ahmedabad</p>
             </div>
           </div>
 
@@ -33,7 +33,7 @@ export default function Footer({ setActiveTab }) {
               <Award className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-semibold text-white text-sm sm:text-base">AMC Protection</h4>
+              <h4 className="font-semibold text-white text-sm sm:text-base">Annual AMC Care</h4>
               <p className="text-xs text-[#858585]">Zero maintenance stress</p>
             </div>
           </div>
@@ -43,8 +43,8 @@ export default function Footer({ setActiveTab }) {
               <PhoneCall className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-semibold text-white text-sm sm:text-base">24/7 AI Assistance</h4>
-              <p className="text-xs text-[#858585]">Coolie AI chatbot support</p>
+              <h4 className="font-semibold text-white text-sm sm:text-base">24/7 AI & WhatsApp</h4>
+              <p className="text-xs text-[#858585]">Direct assistance: +91 9099991453</p>
             </div>
           </div>
         </div>
@@ -59,33 +59,33 @@ export default function Footer({ setActiveTab }) {
               <span className="text-lg font-black text-white tracking-tight">COOLING HUB</span>
             </div>
             <p className="text-xs text-[#858585] leading-relaxed mb-4">
-              India's premier all-in-one platform for AC shopping, expert installation, maintenance, complaint resolution, and AMC care. Powered by FastAPI & modern Web Tech.
+              Authorized Daikin & premium multi-brand AC sales, expert installation, foam jet maintenance, complaint resolution, and AMC care by <strong>Parshwa Enterprise</strong>, Ahmedabad.
             </p>
-            <div className="flex items-center space-x-2 text-xs text-[#E2E0DB]/80">
-              <MapPin className="w-4 h-4 text-[#C8A96B]" />
-              <span>Cooling Hub Tower, Sector 62, Noida, NCR</span>
+            <div className="flex items-start space-x-2 text-xs text-[#E2E0DB]/80">
+              <MapPin className="w-4 h-4 text-[#C8A96B] flex-shrink-0 mt-0.5" />
+              <span>Parshwa Enterprise, Navrangpura, Ahmedabad, Gujarat - 380009</span>
             </div>
           </div>
 
           <div>
             <h4 className="font-semibold text-white text-sm mb-4">AC Shopping</h4>
             <ul className="space-y-2 text-xs">
-              <li><button onClick={() => setActiveTab('shop')} className="hover:text-[#C8A96B] transition">Split ACs (1.0T, 1.5T, 2.0T)</button></li>
-              <li><button onClick={() => setActiveTab('shop')} className="hover:text-[#C8A96B] transition">Window ACs</button></li>
-              <li><button onClick={() => setActiveTab('shop')} className="hover:text-[#C8A96B] transition">5-Star Inverter ACs</button></li>
-              <li><button onClick={() => setActiveTab('calculator')} className="hover:text-[#C8A96B] transition">Energy Calculator</button></li>
-              <li><button onClick={() => setActiveTab('shop')} className="hover:text-[#C8A96B] transition">Product Comparison</button></li>
+              <li><button onClick={() => setActiveTab('shop')} className="hover:text-[#C8A96B] transition cursor-pointer">Split ACs (1.0T, 1.5T, 2.0T)</button></li>
+              <li><button onClick={() => setActiveTab('shop')} className="hover:text-[#C8A96B] transition cursor-pointer">Window ACs</button></li>
+              <li><button onClick={() => setActiveTab('shop')} className="hover:text-[#C8A96B] transition cursor-pointer">5-Star Inverter ACs</button></li>
+              <li><button onClick={() => setActiveTab('calculator')} className="hover:text-[#C8A96B] transition cursor-pointer">Energy Calculator</button></li>
+              <li><button onClick={() => setActiveTab('shop')} className="hover:text-[#C8A96B] transition cursor-pointer">Product Comparison</button></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-semibold text-white text-sm mb-4">Services & Complaints</h4>
             <ul className="space-y-2 text-xs">
-              <li><button onClick={() => setActiveTab('services')} className="hover:text-[#C8A96B] transition">AC Foam Jet Wash</button></li>
-              <li><button onClick={() => setActiveTab('services')} className="hover:text-[#C8A96B] transition">AC Installation & Uninstallation</button></li>
-              <li><button onClick={() => setActiveTab('services')} className="hover:text-[#C8A96B] transition">Gas Charging (R32 / R410A)</button></li>
-              <li><button onClick={() => setActiveTab('complaints')} className="hover:text-[#C8A96B] transition">Raise Priority Complaint</button></li>
-              <li><button onClick={() => setActiveTab('amc')} className="hover:text-[#C8A96B] transition">Annual Maintenance Contracts (AMC)</button></li>
+              <li><button onClick={() => setActiveTab('services')} className="hover:text-[#C8A96B] transition cursor-pointer">AC Foam Jet Wash</button></li>
+              <li><button onClick={() => setActiveTab('services')} className="hover:text-[#C8A96B] transition cursor-pointer">AC Installation & Uninstallation</button></li>
+              <li><button onClick={() => setActiveTab('services')} className="hover:text-[#C8A96B] transition cursor-pointer">Gas Charging (R32 / R410A)</button></li>
+              <li><button onClick={() => setActiveTab('complaints')} className="hover:text-[#C8A96B] transition cursor-pointer">Raise Priority Complaint</button></li>
+              <li><button onClick={() => setActiveTab('amc')} className="hover:text-[#C8A96B] transition cursor-pointer">Annual Maintenance Contracts (AMC)</button></li>
             </ul>
           </div>
 
@@ -93,22 +93,22 @@ export default function Footer({ setActiveTab }) {
             <h4 className="font-semibold text-white text-sm mb-4">Support & Contact</h4>
             <div className="space-y-3 text-xs">
               <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4 text-[#C8A96B]" />
-                <span>24/7 Helpline: +91 1800-COOL-HUB</span>
+                <Phone className="w-4 h-4 text-[#C8A96B] flex-shrink-0" />
+                <span>Sales & Support: <strong>+91 90999 91453</strong></span>
               </div>
               <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 text-[#C8A96B]" />
-                <span>support@coolinghub.com</span>
+                <Mail className="w-4 h-4 text-[#C8A96B] flex-shrink-0" />
+                <span>parshwaenterprise01@gmail.com</span>
               </div>
               <div className="pt-2">
-                <span className="block text-[11px] font-semibold text-[#858585] mb-1">Simulated WhatsApp Support:</span>
+                <span className="block text-[11px] font-semibold text-[#858585] mb-1">WhatsApp Direct Desk:</span>
                 <a 
-                  href="https://wa.me/919876543210?text=Hi%20Cooling%20Hub,%20I%20need%20assistance" 
+                  href="https://wa.me/919099991453?text=Hi%20Parshwa%20Enterprise,%20I%20have%20an%20inquiry%20regarding%20AC%20sales%20and%20service%20in%20Ahmedabad" 
                   target="_blank" 
                   rel="noreferrer"
-                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-[#1A1A1A] hover:bg-[#C8A96B] hover:text-[#111111] text-white border border-[#C8A96B]/30 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm"
+                  className="inline-flex items-center space-x-2 px-3 py-1.5 bg-emerald-700/80 hover:bg-emerald-600 text-white border border-emerald-500/40 rounded-xl text-xs font-bold transition-all duration-200 shadow-sm"
                 >
-                  <span>WhatsApp Helpdesk</span>
+                  <span>Chat on WhatsApp (+91 90999 91453)</span>
                 </a>
               </div>
             </div>
@@ -117,7 +117,7 @@ export default function Footer({ setActiveTab }) {
 
         {/* Copyright */}
         <div className="pt-8 border-t border-[#292929] text-center text-xs text-[#858585]">
-          © {new Date().getFullYear()} Cooling Hub Platform — Final Year Academic Project. Built with FastAPI, React 18, and Tailwind CSS.
+          © {new Date().getFullYear()} Cooling Hub Platform & Parshwa Enterprise. Authorized AC Sales & Doorstep Care in Ahmedabad, Gujarat.
         </div>
       </div>
     </footer>
