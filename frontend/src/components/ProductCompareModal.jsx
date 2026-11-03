@@ -110,6 +110,14 @@ export default function ProductCompareModal({ isOpen, onClose }) {
                 ))}
               </tr>
               <tr>
+                <td className="p-3 font-semibold text-[#858585]">Official Warranty</td>
+                {compareItems.map((item) => (
+                  <td key={item.id} className="p-3 text-center font-bold text-xs text-[#111111] dark:text-[#C8A96B]">
+                    🛡️ {item.warranty_summary || '10 Yr Comp • 5 Yr PCB'}
+                  </td>
+                ))}
+              </tr>
+              <tr>
                 <td className="p-3 font-semibold text-[#858585]">Key Features</td>
                 {compareItems.map((item) => (
                   <td key={item.id} className="p-3 text-center leading-relaxed text-[11px] text-[#555555] dark:text-[#858585]">

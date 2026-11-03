@@ -130,7 +130,7 @@ export default function ProductDetail({ productId, setActiveTab }) {
             <div className="p-3.5 sm:p-4 bg-[#F7F6F2] dark:bg-[#252525] rounded-xl text-center border border-[#E2E0DB] dark:border-[#2E2E2E]">
               <Award className="w-5 h-5 text-[#C8A96B] mx-auto mb-1" />
               <span className="block text-[11px] text-[#555555] dark:text-[#858585] font-bold uppercase">Warranty</span>
-              <span className="text-base sm:text-lg font-black text-[#111111] dark:text-white">10 Yr Comp</span>
+              <span className="text-xs sm:text-sm font-black text-[#111111] dark:text-white">{product.warranty_summary ? product.warranty_summary.split('•')[0].trim() : '10 Yr Comp'}</span>
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function ProductDetail({ productId, setActiveTab }) {
         <div className="lg:col-span-6 space-y-6">
           <div>
             <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#C8A96B]">
-              {product.brand} • {product.ac_type} AC • {product.tonnage} Ton
+              {product.brand} {product.model ? `• ${product.model}` : ''} • {product.ac_type} AC • {product.tonnage} Ton
             </span>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#111111] dark:text-white mt-1 leading-snug">
               {product.title}
@@ -179,6 +179,58 @@ export default function ProductDetail({ productId, setActiveTab }) {
                   ✓ {feat.trim()}
                 </span>
               ))}
+            </div>
+          </div>
+
+          {/* Official Manufacturer Warranty Card */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F0] dark:bg-[#202020] border border-[#C8A96B]/40 space-y-3.5 shadow-xs">
+            <div className="flex items-center justify-between border-b border-[#E2E0DB] dark:border-[#333333] pb-2.5">
+              <div className="flex items-center space-x-2">
+                <ShieldCheck className="w-5 h-5 text-[#C8A96B]" />
+                <h4 className="font-extrabold text-xs sm:text-sm text-[#111111] dark:text-white uppercase tracking-wider">
+                  Official Brand Warranty & Guarantees
+                </h4>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#C8A96B]/20 text-[#111111] dark:text-[#C8A96B] text-[10px] sm:text-[11px] font-black uppercase">
+                100% Genuine OEM
+              </span>
+            </div>
+
+            {/* 3-Tier Warranty Spec Badges */}
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-white dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E]">
+                <span className="block text-[9px] sm:text-[10px] uppercase font-bold text-[#555555] dark:text-[#888888]">Comprehensive</span>
+                <span className="text-xs sm:text-sm font-black text-[#111111] dark:text-white">1 Year Unit</span>
+              </div>
+              <div className="p-2 sm:p-2.5 rounded-xl bg-white dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E]">
+                <span className="block text-[9px] sm:text-[10px] uppercase font-bold text-[#555555] dark:text-[#888888]">Inverter PCB</span>
+                <span className="text-xs sm:text-sm font-black text-[#111111] dark:text-white">5 Years PCB</span>
+              </div>
+              <div className="p-2 sm:p-2.5 rounded-xl bg-white dark:bg-[#1A1A1A] border border-[#E2E0DB] dark:border-[#2E2E2E]">
+                <span className="block text-[9px] sm:text-[10px] uppercase font-bold text-[#555555] dark:text-[#888888]">Compressor</span>
+                <span className="text-xs sm:text-sm font-black text-[#111111] dark:text-white">10 Years Comp</span>
+              </div>
+            </div>
+
+            {product.warranty_details && (
+              <p className="text-xs text-[#555555] dark:text-[#A8A8A8] leading-relaxed pt-0.5">
+                {product.warranty_details}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1 text-[11px] font-semibold text-[#111111] dark:text-[#DDDDDD]">
+              <span className="flex items-center space-x-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Original Brand Warranty Card Included</span>
+              </span>
+              <span className="flex items-center space-x-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>GST Tax Invoice with Serial Number</span>
+              </span>
+              <span className="flex items-center space-x-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Parshwa Enterprise Certified Installation</span>
+              </span>
             </div>
           </div>
 

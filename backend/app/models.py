@@ -47,6 +47,8 @@ class Product(Base):
     model = Column(String, nullable=True)
     is_featured = Column(Boolean, default=False)
     badge = Column(String, default="")
+    warranty_summary = Column(String, nullable=True, default="1 Year Comprehensive, 5 Years PCB, 10 Years Compressor")
+    warranty_details = Column(Text, nullable=True)
 
     order_items = relationship("OrderItem", back_populates="product")
     reviews = relationship("Review", back_populates="product")

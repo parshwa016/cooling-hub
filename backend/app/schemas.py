@@ -41,6 +41,8 @@ class ProductBase(BaseModel):
     model: Optional[str] = None
     is_featured: bool = False
     badge: Optional[str] = ""
+    warranty_summary: Optional[str] = "1 Year Comprehensive, 5 Years PCB, 10 Years Compressor"
+    warranty_details: Optional[str] = None
 
 class ProductCreate(ProductBase):
     pass
@@ -66,6 +68,8 @@ class ProductUpdate(BaseModel):
     model: Optional[str] = None
     is_featured: Optional[bool] = None
     badge: Optional[str] = None
+    warranty_summary: Optional[str] = None
+    warranty_details: Optional[str] = None
 
 class ProductResponse(ProductBase):
     id: int

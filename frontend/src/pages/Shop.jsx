@@ -360,7 +360,7 @@ export default function Shop({ setActiveTab, onSelectProduct }) {
                         <div>
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-extrabold text-[#C8A96B] tracking-wider uppercase">
-                              {p.brand} • {p.tonnage} Ton
+                              {p.brand} {p.model ? `• ${p.model}` : ''} • {p.tonnage} Ton
                             </span>
                             <span className="text-[10px] font-bold text-[#555555]">ISEER {p.iseer_rating}</span>
                           </div>
@@ -374,9 +374,16 @@ export default function Shop({ setActiveTab, onSelectProduct }) {
 
                           <p className="text-xs text-[#555555] line-clamp-1 mt-1">{p.features}</p>
                           
-                          <div className="mt-2">
+                          <div className="mt-2 flex items-center justify-between">
                             <RatingStars rating={p.rating} count={p.reviews_count} />
                           </div>
+
+                          {p.warranty_summary && (
+                            <div className="mt-2 inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-[#FAF7F0] dark:bg-[#252525] border border-[#C8A96B]/30 text-[10px] font-bold text-[#111111] dark:text-[#C8A96B]">
+                              <span>🛡️</span>
+                              <span className="truncate">{p.warranty_summary}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
