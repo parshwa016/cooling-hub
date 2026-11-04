@@ -182,6 +182,12 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
 
   if (!isOpen) return null;
 
+  const getProductTransparentImage = (prod) => {
+    if (!prod || !prod.image) return '/images/products/daikin_split.png';
+    if (prod.image.endsWith('.png')) return prod.image;
+    return prod.image.replace(/\.jpg$/i, '.png');
+  };
+
   const currentProduct = selectedProduct || products[0] || {
     id: 1,
     title: 'Daikin 1.5 Ton 5 Star Inverter Split AC',
@@ -191,7 +197,7 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
     price: 45490,
     original_price: 52000,
     ac_type: 'Split',
-    image: '/images/products/daikin_split.jpg'
+    image: '/images/products/daikin_split.png'
   };
 
   // Handle room photo upload via file input
@@ -339,19 +345,22 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
       // Compute AC placement in 1280x800 canvas space
       const acCenterX = (position.x / 100) * canvas.width;
       const acCenterY = (position.y / 100) * canvas.height;
-      const baseWidth = 420 * scale;
-      const baseHeight = 170 * scale;
-      const acLeft = acCenterX - baseWidth / 2;
-      const acTop = acCenterY - baseHeight / 2;
 
-      // Draw real AC product photo from store catalog
+      // Draw real AC product photo (transparent cutout) from store catalog
       const acImg = new Image();
       acImg.crossOrigin = 'anonymous';
       await new Promise((resolve) => {
         acImg.onload = resolve;
         acImg.onerror = resolve;
-        acImg.src = currentProduct.image || '/images/products/daikin_split.jpg';
+        acImg.src = getProductTransparentImage(currentProduct);
       });
+
+      // Maintain aspect ratio of transparent AC image
+      const acAspect = (acImg.width && acImg.height) ? (acImg.width / acImg.height) : 2.8;
+      const baseWidth = 440 * scale;
+      const baseHeight = baseWidth / acAspect;
+      const acLeft = acCenterX - baseWidth / 2;
+      const acTop = acCenterY - baseHeight / 2;
 
       // Draw AC unit realistic wall shadow
       ctx.save();
@@ -365,23 +374,23 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
       }
       ctx.restore();
 
-      // Brand & Star badge on real product
+      // Brand & Star badge floating above product
       ctx.fillStyle = 'rgba(17, 17, 17, 0.85)';
       ctx.beginPath();
-      ctx.roundRect(acLeft + 12 * scale, acTop + 10 * scale, 130 * scale, 24 * scale, 6 * scale);
+      ctx.roundRect(acLeft + 8 * scale, acTop - 18 * scale, 120 * scale, 20 * scale, 6 * scale);
       ctx.fill();
       ctx.fillStyle = '#C8A96B';
-      ctx.font = `bold ${Math.round(12 * scale)}px sans-serif`;
-      ctx.fillText(`${currentProduct.brand} ★${currentProduct.star_rating}★`, acLeft + 20 * scale, acTop + 26 * scale);
+      ctx.font = `bold ${Math.round(11 * scale)}px sans-serif`;
+      ctx.fillText(`${currentProduct.brand} ★${currentProduct.star_rating}★`, acLeft + 15 * scale, acTop - 4 * scale);
 
-      // LED Temperature Display (Glowing)
+      // LED Temperature Display (Glowing on right panel)
       ctx.save();
       ctx.fillStyle = '#10B981';
       ctx.shadowColor = '#10B981';
       ctx.shadowBlur = 8;
-      ctx.font = `bold ${Math.round(18 * scale)}px monospace`;
+      ctx.font = `bold ${Math.round(16 * scale)}px monospace`;
       ctx.textAlign = 'right';
-      ctx.fillText(`${temperature}°C`, acLeft + baseWidth - 20 * scale, acTop + baseHeight - 16 * scale);
+      ctx.fillText(`${temperature}°C`, acLeft + baseWidth - 22 * scale, acTop + baseHeight - 16 * scale);
       ctx.restore();
 
       // Draw Watermark / Branding Footer Card in Snapshot
@@ -757,35 +766,35 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                       touchAction: 'none'
                     }}
                   >
-                    {/* Genuine Store Product Photo mounted on wall */}
-                    <div className="relative rounded-2xl overflow-visible filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)]">
+                    {/* Realistic Wall Mounted AC Unit (No white background container) */}
+                    <div className="relative select-none filter drop-shadow-[0_20px_30px_rgba(0,0,0,0.65)]">
                       
-                      {/* Product Image Frame */}
-                      <div className="relative rounded-xl overflow-hidden bg-white/95 border border-white/40 shadow-inner">
-                        <img 
-                          src={currentProduct.image} 
-                          alt={currentProduct.title}
-                          className="w-[280px] sm:w-[370px] md:w-[440px] h-[115px] sm:h-[145px] md:h-[165px] object-contain p-2 select-none pointer-events-none"
-                          onError={(e) => { e.target.src = '/images/products/daikin_split.jpg'; }}
-                        />
+                      {/* Transparent Cutout AC Image (Only the AC body, zero white margins) */}
+                      <img 
+                        src={getProductTransparentImage(currentProduct)} 
+                        alt={currentProduct.title}
+                        className="w-[280px] sm:w-[390px] md:w-[460px] h-auto object-contain select-none pointer-events-none block"
+                        onError={(e) => { 
+                          e.target.src = currentProduct.image || '/images/products/daikin_split.png'; 
+                        }}
+                      />
 
-                        {/* Floating Brand & Star Rating Badge on the unit */}
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-[#111111]/85 backdrop-blur-xs text-white text-[10px] font-bold flex items-center space-x-1.5 border border-white/10 shadow-sm pointer-events-none">
-                          <span className="text-[#C8A96B] font-extrabold tracking-wider uppercase">{currentProduct.brand}</span>
-                          <span className="text-amber-400">★{currentProduct.star_rating}★</span>
-                        </div>
+                      {/* Brand & Star Rating Badge - Floating cleanly above the top-left edge */}
+                      <div className="absolute -top-3 left-2 px-2.5 py-0.5 rounded-full bg-black/85 backdrop-blur-md text-white text-[10px] font-bold flex items-center space-x-1.5 border border-white/15 shadow-md pointer-events-none">
+                        <span className="text-[#C8A96B] font-extrabold tracking-wider uppercase">{currentProduct.brand}</span>
+                        <span className="text-amber-400">★{currentProduct.star_rating}★</span>
+                      </div>
 
-                        {/* Concealed Realistic Digital Temperature LED Glow */}
-                        <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-[#0F172A]/90 backdrop-blur-xs border border-[#334155] shadow-inner flex items-center space-x-1 pointer-events-none">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span className="font-mono font-bold text-xs sm:text-sm text-emerald-400">
-                            {temperature}°C
-                          </span>
-                        </div>
+                      {/* Concealed Realistic Digital Temperature LED Glow on the unit */}
+                      <div className="absolute bottom-2.5 right-4 sm:right-6 px-2 py-0.5 rounded-md bg-[#0F172A]/85 backdrop-blur-xs border border-[#334155]/60 shadow-inner flex items-center space-x-1 pointer-events-none">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="font-mono font-bold text-xs sm:text-sm text-emerald-400 tracking-wider">
+                          {temperature}°C
+                        </span>
                       </div>
 
                       {/* Drag Move Handle Pill on Hover */}
-                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black/85 backdrop-blur-md text-[#C8A96B] px-3 py-1 rounded-full text-[10px] font-bold flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none whitespace-nowrap">
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/85 backdrop-blur-md text-[#C8A96B] px-3 py-1 rounded-full text-[10px] font-bold flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none whitespace-nowrap">
                         <Move className="w-3 h-3" />
                         <span>Drag anywhere on wall</span>
                       </div>
