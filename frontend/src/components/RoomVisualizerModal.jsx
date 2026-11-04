@@ -10,37 +10,6 @@ import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { usePopup } from '../context/PopupContext';
 
-const SAMPLE_ROOMS = [
-  {
-    id: 'living_room',
-    name: 'Modern Living Room',
-    type: 'Living Room',
-    image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1600&q=80',
-    desc: 'Contemporary neutral wall with sofa & natural lighting'
-  },
-  {
-    id: 'master_bedroom',
-    name: 'Luxury Master Bedroom',
-    type: 'Bedroom',
-    image: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1600&q=80',
-    desc: 'Spacious master bed wall with ambient recessed lights'
-  },
-  {
-    id: 'study_room',
-    name: 'Minimalist Study / Office',
-    type: 'Workstation',
-    image: 'https://images.unsplash.com/photo-1593062096033-9a26b09da705?auto=format&fit=crop&w=1600&q=80',
-    desc: 'Compact desk workspace wall with minimal decor'
-  },
-  {
-    id: 'dining_area',
-    name: 'Spacious Dining Hall',
-    type: 'Dining',
-    image: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1600&q=80',
-    desc: 'Open dining area with accent wall and wide ceiling span'
-  }
-];
-
 export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = null }) {
   const { addToCart } = useCart();
   const { showToast } = usePopup();
@@ -49,8 +18,8 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(initialProduct);
 
-  // Room photo state
-  const [roomImage, setRoomImage] = useState(SAMPLE_ROOMS[0].image);
+  // Room photo state (null by default so user can directly click or upload their real wall photo)
+  const [roomImage, setRoomImage] = useState(null);
   const [isCustomUpload, setIsCustomUpload] = useState(false);
   const [uploadFileName, setUploadFileName] = useState('');
   const [isDraggingOver, setIsDraggingOver] = useState(false);
@@ -72,7 +41,6 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
   const [airflowSpeed, setAirflowSpeed] = useState('breeze'); // 'breeze' | 'turbo'
   const [showClearanceGuides, setShowClearanceGuides] = useState(true);
   const [lightingMode, setLightingMode] = useState('day'); // 'day' | 'warm' | 'night'
-  const [viewMode, setViewMode] = useState('chassis'); // 'chassis' | 'catalog'
   const [isExporting, setIsExporting] = useState(false);
 
   // Dragging interaction state
@@ -371,62 +339,49 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
       // Compute AC placement in 1280x800 canvas space
       const acCenterX = (position.x / 100) * canvas.width;
       const acCenterY = (position.y / 100) * canvas.height;
-      const baseWidth = 360 * scale;
-      const baseHeight = 110 * scale;
+      const baseWidth = 420 * scale;
+      const baseHeight = 170 * scale;
       const acLeft = acCenterX - baseWidth / 2;
       const acTop = acCenterY - baseHeight / 2;
 
+      // Draw real AC product photo from store catalog
+      const acImg = new Image();
+      acImg.crossOrigin = 'anonymous';
+      await new Promise((resolve) => {
+        acImg.onload = resolve;
+        acImg.onerror = resolve;
+        acImg.src = currentProduct.image || '/images/products/daikin_split.jpg';
+      });
+
       // Draw AC unit realistic wall shadow
       ctx.save();
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
       ctx.shadowBlur = 25 * scale;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 15 * scale;
 
-      // Draw AC Unit chassis body
-      ctx.fillStyle = '#FFFFFF';
-      const r = 12 * scale;
-      ctx.beginPath();
-      ctx.moveTo(acLeft + r, acTop);
-      ctx.lineTo(acLeft + baseWidth - r, acTop);
-      ctx.quadraticCurveTo(acLeft + baseWidth, acTop, acLeft + baseWidth, acTop + r);
-      ctx.lineTo(acLeft + baseWidth, acTop + baseHeight - r);
-      ctx.quadraticCurveTo(acLeft + baseWidth, acTop + baseHeight, acLeft + baseWidth - r, acTop + baseHeight);
-      ctx.lineTo(acLeft + r, acTop + baseHeight);
-      ctx.quadraticCurveTo(acLeft, acTop + baseHeight, acLeft, acTop + baseHeight - r);
-      ctx.lineTo(acLeft, acTop + r);
-      ctx.quadraticCurveTo(acLeft, acTop, acLeft + r, acTop);
-      ctx.closePath();
-      ctx.fill();
+      if (acImg.width) {
+        ctx.drawImage(acImg, acLeft, acTop, baseWidth, baseHeight);
+      }
       ctx.restore();
 
-      // Top air intake grille
-      ctx.fillStyle = '#E5E7EB';
-      ctx.fillRect(acLeft + 20 * scale, acTop + 8 * scale, baseWidth - 40 * scale, 6 * scale);
-
-      // Bottom louvre flap line
-      ctx.fillStyle = '#D1D5DB';
-      ctx.fillRect(acLeft + 15 * scale, acTop + baseHeight - 16 * scale, baseWidth - 30 * scale, 3 * scale);
-
-      // Brand Logo Text
-      ctx.fillStyle = '#1E3A8A';
-      ctx.font = `bold ${Math.round(15 * scale)}px sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.fillText(currentProduct.brand.toUpperCase(), acLeft + 25 * scale, acTop + baseHeight - 32 * scale);
-
-      // 5-Star BEE Badge
-      ctx.fillStyle = '#DC2626';
-      ctx.font = `bold ${Math.round(10 * scale)}px sans-serif`;
-      ctx.fillText(`★ ${currentProduct.star_rating} STAR BEE`, acLeft + 25 * scale, acTop + 32 * scale);
+      // Brand & Star badge on real product
+      ctx.fillStyle = 'rgba(17, 17, 17, 0.85)';
+      ctx.beginPath();
+      ctx.roundRect(acLeft + 12 * scale, acTop + 10 * scale, 130 * scale, 24 * scale, 6 * scale);
+      ctx.fill();
+      ctx.fillStyle = '#C8A96B';
+      ctx.font = `bold ${Math.round(12 * scale)}px sans-serif`;
+      ctx.fillText(`${currentProduct.brand} ★${currentProduct.star_rating}★`, acLeft + 20 * scale, acTop + 26 * scale);
 
       // LED Temperature Display (Glowing)
       ctx.save();
-      ctx.fillStyle = '#059669';
+      ctx.fillStyle = '#10B981';
       ctx.shadowColor = '#10B981';
       ctx.shadowBlur = 8;
-      ctx.font = `bold ${Math.round(24 * scale)}px monospace`;
+      ctx.font = `bold ${Math.round(18 * scale)}px monospace`;
       ctx.textAlign = 'right';
-      ctx.fillText(`${temperature}°C`, acLeft + baseWidth - 25 * scale, acTop + baseHeight / 2 + 8 * scale);
+      ctx.fillText(`${temperature}°C`, acLeft + baseWidth - 20 * scale, acTop + baseHeight - 16 * scale);
       ctx.restore();
 
       // Draw Watermark / Branding Footer Card in Snapshot
@@ -680,193 +635,195 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`flex-1 relative w-full h-full overflow-hidden flex items-center justify-center cursor-crosshair transition-all ${
-                isDraggingOver ? 'ring-4 ring-[#C8A96B] ring-inset' : ''
-              }`}
+              className={`flex-1 relative w-full h-full overflow-hidden flex items-center justify-center transition-all ${
+                roomImage ? 'cursor-crosshair' : 'cursor-default'
+              } ${isDraggingOver ? 'ring-4 ring-[#C8A96B] ring-inset' : ''}`}
             >
-              {/* Room Background Photo */}
-              <img
-                src={roomImage}
-                alt="Room Wall"
-                className={`w-full h-full object-cover transition-all duration-300 pointer-events-none ${
-                  lightingMode === 'warm' ? 'sepia-[0.3] brightness-95' : ''
-                } ${
-                  lightingMode === 'night' ? 'brightness-[0.4] contrast-125' : ''
-                }`}
-              />
+              {!roomImage ? (
+                /* Initial Setup State: Instant Camera Click or Photo Upload (No Templates) */
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-[#181818] via-[#111111] to-[#0A0A0A] select-none">
+                  {/* Subtle ambient glow & grid pattern */}
+                  <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#C8A96B_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#C8A96B]/10 rounded-full blur-3xl pointer-events-none" />
 
-              {/* Ceiling & Wall Clearance Guides (Dashed Lines) */}
-              {showClearanceGuides && (
-                <div className="absolute inset-0 pointer-events-none z-10 transition-opacity">
-                  {/* Ceiling Clearance Line */}
-                  <div 
-                    className="absolute left-0 right-0 border-b-2 border-dashed border-[#C8A96B]/60 flex items-center justify-center"
-                    style={{ top: `${Math.max(4, position.y - 12)}%` }}
-                  >
-                    <span className="bg-black/80 text-[#C8A96B] text-[10px] px-2.5 py-0.5 rounded-full font-mono font-bold tracking-wide -translate-y-1/2">
-                      ↑ Min 15 cm Ceiling Air-Intake Clearance Recommended
-                    </span>
-                  </div>
-
-                  {/* Horizontal Wall Alignment Guide */}
-                  <div 
-                    className="absolute left-0 right-0 border-b border-white/20"
-                    style={{ top: `${position.y}%` }}
-                  />
-
-                  {/* Center Vertical Guideline */}
-                  <div 
-                    className="absolute top-0 bottom-0 border-r border-white/20"
-                    style={{ left: `${position.x}%` }}
-                  />
-                </div>
-              )}
-
-              {/* Draggable AC Indoor Unit */}
-              <div
-                onMouseDown={handlePointerDown}
-                onTouchStart={handlePointerDown}
-                className="absolute z-20 cursor-grab active:cursor-grabbing transition-transform"
-                style={{
-                  left: `${position.x}%`,
-                  top: `${position.y}%`,
-                  transform: `translate(-50%, -50%) scale(${scale})`,
-                  touchAction: 'none'
-                }}
-              >
-                
-                {/* Visualizer Mode: 3D Realistic Chassis or Catalog Image */}
-                {viewMode === 'catalog' ? (
-                  <div className="relative rounded-2xl overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] border border-white/20 bg-white">
-                    <img 
-                      src={currentProduct.image} 
-                      alt={currentProduct.title}
-                      className="w-[280px] sm:w-[360px] md:w-[420px] h-[130px] sm:h-[160px] object-cover pointer-events-none"
-                      onError={(e) => { e.target.src = '/images/products/daikin_split.jpg'; }}
-                    />
-                  </div>
-                ) : (
-                  /* Realistic 3D Indoor Split AC Unit Chassis */
-                  <div 
-                    className="relative w-[300px] sm:w-[380px] md:w-[430px] h-[95px] sm:h-[110px] rounded-2xl bg-gradient-to-b from-[#FFFFFF] via-[#F8F9FA] to-[#E5E7EB] border border-[#D1D5DB] shadow-[0_25px_45px_-10px_rgba(0,0,0,0.65),0_10px_20px_-5px_rgba(0,0,0,0.4)] flex flex-col justify-between p-3.5 overflow-visible select-none group"
-                  >
+                  <div className="relative max-w-md w-full bg-[#1A1A1A]/95 backdrop-blur-md border border-[#C8A96B]/30 rounded-3xl p-6 sm:p-7 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] space-y-5 animate-in fade-in zoom-in-95 duration-200">
                     
-                    {/* Top Air Intake Grille Lines */}
-                    <div className="w-full flex flex-col space-y-1 opacity-70">
-                      <div className="h-1 bg-[#E2E8F0] rounded-full w-full shadow-inner" />
-                      <div className="h-0.5 bg-[#CBD5E1] rounded-full w-11/12 mx-auto" />
+                    {/* Header */}
+                    <div className="space-y-2">
+                      <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-[#C8A96B] to-[#9E7D3B] text-[#111111] flex items-center justify-center shadow-lg shadow-[#C8A96B]/25">
+                        <Camera className="w-7 h-7" />
+                      </div>
+                      <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                        Preview on Your Real Wall
+                      </h3>
+                      <p className="text-xs text-[#A3A3A3] leading-relaxed">
+                        Snap a photo of your wall right now or upload one to see how the{' '}
+                        <span className="text-[#C8A96B] font-bold">{currentProduct.brand} {currentProduct.tonnage} Ton AC</span>{' '}
+                        looks and fits before buying.
+                      </p>
                     </div>
 
-                    {/* Front Chassis Face: Brand Badge, Energy Star, Digital Temp */}
-                    <div className="flex items-center justify-between px-2 pt-1">
+                    {/* Two Prominent Action Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                       
-                      {/* Brand Logo Display */}
-                      <div className="flex flex-col">
-                        <span className="font-black text-sm tracking-widest text-[#1E3A8A] uppercase">
-                          {currentProduct.brand}
-                        </span>
-                        <span className="text-[8px] font-extrabold text-[#64748B] tracking-tight uppercase -mt-0.5">
-                          {currentProduct.is_inverter ? 'AI Dual Inverter' : 'Heavy Duty'}
-                        </span>
-                      </div>
+                      {/* Card 1: Click Live Photo */}
+                      <button
+                        onClick={() => startLiveCamera()}
+                        className="group relative p-4 rounded-2xl bg-gradient-to-b from-[#C8A96B] to-[#A38343] hover:from-[#d8bb7f] hover:to-[#b39352] text-[#111111] font-bold text-left transition-all duration-200 shadow-lg hover:shadow-[0_0_25px_rgba(200,169,107,0.4)] hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between h-32"
+                      >
+                        <div className="w-9 h-9 rounded-xl bg-black/15 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Camera className="w-5 h-5 text-[#111111]" />
+                        </div>
+                        <div>
+                          <span className="block text-sm font-black text-[#111111]">Click Live Photo</span>
+                          <span className="block text-[11px] text-[#111111]/80 mt-0.5 font-medium">Camera Viewfinder</span>
+                        </div>
+                      </button>
 
-                      {/* Center Energy Star Logo */}
-                      <div className="px-2 py-0.5 bg-gradient-to-r from-red-600 to-amber-500 text-white rounded text-[9px] font-extrabold tracking-tight flex items-center space-x-1 shadow-sm">
-                        <span>★ {currentProduct.star_rating} STAR</span>
-                      </div>
-
-                      {/* Concealed LED Temperature Display */}
-                      <div className="flex items-center space-x-1.5 bg-[#0F172A] px-2.5 py-1 rounded-lg border border-[#334155] shadow-inner">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="font-mono font-bold text-base text-emerald-400 tracking-wider">
-                          {temperature}°C
-                        </span>
-                      </div>
+                      {/* Card 2: Upload Wall Photo */}
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="group relative p-4 rounded-2xl bg-[#242424] hover:bg-[#2C2C2C] border border-white/10 hover:border-[#C8A96B]/60 text-white font-bold text-left transition-all duration-200 shadow-md hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between h-32"
+                      >
+                        <div className="w-9 h-9 rounded-xl bg-white/10 text-[#C8A96B] flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Upload className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="block text-sm font-black text-white group-hover:text-[#C8A96B] transition-colors">Upload Photo</span>
+                          <span className="block text-[11px] text-[#888888] mt-0.5 font-medium">Gallery or PC Files</span>
+                        </div>
+                      </button>
 
                     </div>
 
-                    {/* Bottom Motorized Louvre Flap */}
-                    <div className="relative w-full pt-1">
-                      <div className="h-2.5 bg-gradient-to-b from-[#E2E8F0] to-[#CBD5E1] rounded-full shadow-inner border-t border-[#94A3B8]/30 flex items-center justify-end px-3">
-                        <span className="text-[7px] text-[#64748B] font-mono">COOLING VANE</span>
-                      </div>
-                    </div>
-
-                    {/* Drag Move Handle Indicator (Hover/Touch) */}
-                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md text-[#C8A96B] px-3 py-1 rounded-full text-[10px] font-bold flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none">
-                      <Move className="w-3 h-3" />
-                      <span>Drag to move on wall</span>
+                    {/* Drag & Drop Hint */}
+                    <div className="pt-3 border-t border-white/10 flex items-center justify-center space-x-2 text-[11px] text-white/50">
+                      <ImageIcon className="w-3.5 h-3.5 text-[#C8A96B]" />
+                      <span>Or drag & drop any room wall photo directly here</span>
                     </div>
 
                   </div>
-                )}
+                </div>
+              ) : (
+                /* Active Room Wall AR View */
+                <>
+                  {/* Room Background Photo */}
+                  <img
+                    src={roomImage}
+                    alt="Room Wall"
+                    className={`w-full h-full object-cover transition-all duration-300 pointer-events-none ${
+                      lightingMode === 'warm' ? 'sepia-[0.3] brightness-95' : ''
+                    } ${
+                      lightingMode === 'night' ? 'brightness-[0.4] contrast-125' : ''
+                    }`}
+                  />
 
-                {/* Animated Cooling Breeze Waves (Discharges downwards from louvres) */}
-                {airflowEnabled && (
-                  <div className="absolute top-[95%] left-0 right-0 pointer-events-none overflow-visible flex flex-col items-center">
-                    
-                    {/* Breeze Stream SVG */}
-                    <svg 
-                      className={`w-[340px] sm:w-[440px] h-[160px] sm:h-[220px] transition-opacity ${
-                        airflowSpeed === 'turbo' ? 'opacity-90' : 'opacity-70'
-                      }`}
-                      viewBox="0 0 400 200" 
-                      fill="none"
-                    >
-                      <defs>
-                        <linearGradient id="breezeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.85" />
-                          <stop offset="40%" stopColor="#818CF8" stopOpacity="0.45" />
-                          <stop offset="100%" stopColor="#C8A96B" stopOpacity="0" />
-                        </linearGradient>
-                      </defs>
+                  {/* Ceiling & Wall Clearance Guides (Dashed Lines) */}
+                  {showClearanceGuides && (
+                    <div className="absolute inset-0 pointer-events-none z-10 transition-opacity">
+                      {/* Ceiling Clearance Line */}
+                      <div 
+                        className="absolute left-0 right-0 border-b-2 border-dashed border-[#C8A96B]/60 flex items-center justify-center"
+                        style={{ top: `${Math.max(4, position.y - 12)}%` }}
+                      >
+                        <span className="bg-black/80 text-[#C8A96B] text-[10px] px-2.5 py-0.5 rounded-full font-mono font-bold tracking-wide -translate-y-1/2">
+                          ↑ Min 15 cm Ceiling Air-Intake Clearance Recommended
+                        </span>
+                      </div>
 
-                      {/* Flowing Wave Paths */}
-                      <path
-                        d="M 60 5 C 90 60, 40 120, 10 190"
-                        stroke="url(#breezeGradient)"
-                        strokeWidth="3"
-                        strokeDasharray="16 12"
-                        className="breeze-line"
+                      {/* Horizontal Wall Alignment Guide */}
+                      <div 
+                        className="absolute left-0 right-0 border-b border-white/20"
+                        style={{ top: `${position.y}%` }}
                       />
-                      <path
-                        d="M 140 8 C 160 70, 130 130, 90 195"
-                        stroke="url(#breezeGradient)"
-                        strokeWidth="4"
-                        strokeDasharray="20 14"
-                        className="breeze-line"
-                      />
-                      <path
-                        d="M 200 10 C 200 80, 200 140, 200 200"
-                        stroke="url(#breezeGradient)"
-                        strokeWidth="5"
-                        strokeDasharray="24 16"
-                        className="breeze-line"
-                      />
-                      <path
-                        d="M 260 8 C 240 70, 270 130, 310 195"
-                        stroke="url(#breezeGradient)"
-                        strokeWidth="4"
-                        strokeDasharray="20 14"
-                        className="breeze-line"
-                      />
-                      <path
-                        d="M 340 5 C 310 60, 360 120, 390 190"
-                        stroke="url(#breezeGradient)"
-                        strokeWidth="3"
-                        strokeDasharray="16 12"
-                        className="breeze-line"
-                      />
-                    </svg>
 
-                    {/* Breeze Status Tag */}
-                    <span className="text-[10px] font-mono font-bold text-sky-300 bg-black/60 px-2 py-0.5 rounded-full -mt-4 backdrop-blur-xs">
-                      {airflowSpeed === 'turbo' ? '⚡ 4-Way Jet Cool Active' : '🍃 Gentle 3D Airflow'}
-                    </span>
+                      {/* Center Vertical Guideline */}
+                      <div 
+                        className="absolute top-0 bottom-0 border-r border-white/20"
+                        style={{ left: `${position.x}%` }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Draggable AC Indoor Unit - Authentic Store Product Photo */}
+                  <div
+                    onMouseDown={handlePointerDown}
+                    onTouchStart={handlePointerDown}
+                    className="absolute z-20 cursor-grab active:cursor-grabbing transition-transform group"
+                    style={{
+                      left: `${position.x}%`,
+                      top: `${position.y}%`,
+                      transform: `translate(-50%, -50%) scale(${scale})`,
+                      touchAction: 'none'
+                    }}
+                  >
+                    {/* Genuine Store Product Photo mounted on wall */}
+                    <div className="relative rounded-2xl overflow-visible filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)]">
+                      
+                      {/* Product Image Frame */}
+                      <div className="relative rounded-xl overflow-hidden bg-white/95 border border-white/40 shadow-inner">
+                        <img 
+                          src={currentProduct.image} 
+                          alt={currentProduct.title}
+                          className="w-[280px] sm:w-[370px] md:w-[440px] h-[115px] sm:h-[145px] md:h-[165px] object-contain p-2 select-none pointer-events-none"
+                          onError={(e) => { e.target.src = '/images/products/daikin_split.jpg'; }}
+                        />
+
+                        {/* Floating Brand & Star Rating Badge on the unit */}
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-[#111111]/85 backdrop-blur-xs text-white text-[10px] font-bold flex items-center space-x-1.5 border border-white/10 shadow-sm pointer-events-none">
+                          <span className="text-[#C8A96B] font-extrabold tracking-wider uppercase">{currentProduct.brand}</span>
+                          <span className="text-amber-400">★{currentProduct.star_rating}★</span>
+                        </div>
+
+                        {/* Concealed Realistic Digital Temperature LED Glow */}
+                        <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-[#0F172A]/90 backdrop-blur-xs border border-[#334155] shadow-inner flex items-center space-x-1 pointer-events-none">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="font-mono font-bold text-xs sm:text-sm text-emerald-400">
+                            {temperature}°C
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Drag Move Handle Pill on Hover */}
+                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black/85 backdrop-blur-md text-[#C8A96B] px-3 py-1 rounded-full text-[10px] font-bold flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none whitespace-nowrap">
+                        <Move className="w-3 h-3" />
+                        <span>Drag anywhere on wall</span>
+                      </div>
+                    </div>
+
+                    {/* Animated Cooling Breeze Waves */}
+                    {airflowEnabled && (
+                      <div className="absolute top-[96%] left-0 right-0 pointer-events-none overflow-visible flex flex-col items-center">
+                        <svg 
+                          className={`w-[340px] sm:w-[440px] h-[150px] sm:h-[210px] transition-opacity ${
+                            airflowSpeed === 'turbo' ? 'opacity-90' : 'opacity-70'
+                          }`}
+                          viewBox="0 0 400 200" 
+                          fill="none"
+                        >
+                          <defs>
+                            <linearGradient id="breezeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.85" />
+                              <stop offset="40%" stopColor="#818CF8" stopOpacity="0.45" />
+                              <stop offset="100%" stopColor="#C8A96B" stopOpacity="0" />
+                            </linearGradient>
+                          </defs>
+
+                          <path d="M 60 5 C 90 60, 40 120, 10 190" stroke="url(#breezeGradient)" strokeWidth="3" strokeDasharray="16 12" className="breeze-line" />
+                          <path d="M 140 8 C 160 70, 130 130, 90 195" stroke="url(#breezeGradient)" strokeWidth="4" strokeDasharray="20 14" className="breeze-line" />
+                          <path d="M 200 10 C 200 80, 200 140, 200 200" stroke="url(#breezeGradient)" strokeWidth="5" strokeDasharray="24 16" className="breeze-line" />
+                          <path d="M 260 8 C 240 70, 270 130, 310 195" stroke="url(#breezeGradient)" strokeWidth="4" strokeDasharray="20 14" className="breeze-line" />
+                          <path d="M 340 5 C 310 60, 360 120, 390 190" stroke="url(#breezeGradient)" strokeWidth="3" strokeDasharray="16 12" className="breeze-line" />
+                        </svg>
+
+                        <span className="text-[10px] font-mono font-bold text-sky-300 bg-black/60 px-2 py-0.5 rounded-full -mt-4 backdrop-blur-xs">
+                          {airflowSpeed === 'turbo' ? '⚡ 4-Way Jet Cool Active' : '🍃 Gentle 3D Airflow'}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
-
-              </div>
+                </>
+              )}
 
               {/* Upload Drop Hint Overlay if dragging a photo */}
               {isDraggingOver && (
@@ -879,198 +836,168 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                 </div>
               )}
 
-                </div>
-              </>
+            </div>
+          </>
+        )}
+
+        {/* Bottom Floating Bar on Canvas: Direct Click Camera & Upload Photo CTAs (NO templates) */}
+        <div className="p-3 bg-black/85 backdrop-blur-md border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-white z-30">
+          
+          {/* Photo Input Actions */}
+          <div className="flex items-center space-x-2">
+            {/* Hidden file input for Photo Upload (Gallery / Files) */}
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              accept="image/*" 
+              className="hidden" 
+            />
+
+            {/* Hidden file input for Direct Native Camera Capture */}
+            <input 
+              type="file" 
+              ref={cameraInputRef} 
+              onChange={handleFileChange} 
+              accept="image/*" 
+              capture="environment" 
+              className="hidden" 
+            />
+            
+            {/* Button 1: Click Live Photo with Camera */}
+            <button
+              onClick={() => startLiveCamera()}
+              className="btn-emerald-primary px-3.5 py-2 text-xs font-bold flex items-center space-x-1.5 shadow-md cursor-pointer"
+              title="Click live photo directly from camera"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>{roomImage ? 'Click New Photo' : 'Click Live Photo'}</span>
+            </button>
+
+            {/* Button 2: Upload Photo from Gallery/Device */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/30 text-xs font-bold flex items-center space-x-1.5 transition shadow-sm cursor-pointer"
+              title="Upload photo of your room or wall from files"
+            >
+              <Upload className="w-3.5 h-3.5 text-[#C8A96B]" />
+              <span>{roomImage ? 'Upload Different' : 'Upload Wall Photo'}</span>
+            </button>
+
+            {roomImage && (
+              <span className="text-[11px] text-emerald-400 font-semibold truncate max-w-[130px] sm:max-w-[180px] hidden sm:inline">
+                ✓ {uploadFileName || 'Wall Active'}
+              </span>
             )}
+          </div>
 
-            {/* Bottom Floating Bar on Canvas: Direct Click Camera & Upload Photo CTAs + Presets */}
-            <div className="p-3 bg-black/85 backdrop-blur-md border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-white z-30">
-              
-              {/* Photo Input Actions */}
-              <div className="flex items-center space-x-2">
-                {/* Hidden file input for Photo Upload (Gallery / Files) */}
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleFileChange} 
-                  accept="image/*" 
-                  className="hidden" 
-                />
+          {/* Right side actions in bottom bar */}
+          <div className="flex items-center space-x-2">
+            {roomImage && (
+              <button
+                onClick={() => {
+                  setRoomImage(null);
+                  setIsCustomUpload(false);
+                  setUploadFileName('');
+                }}
+                className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-medium transition cursor-pointer flex items-center space-x-1.5"
+                title="Change or reset wall photo"
+              >
+                <RotateCcw className="w-3 h-3 text-[#C8A96B]" />
+                <span>Change Wall</span>
+              </button>
+            )}
+          </div>
 
-                {/* Hidden file input for Direct Native Camera Capture */}
-                <input 
-                  type="file" 
-                  ref={cameraInputRef} 
-                  onChange={handleFileChange} 
-                  accept="image/*" 
-                  capture="environment" 
-                  className="hidden" 
-                />
-                
-                {/* Button 1: Click Live Photo with Camera */}
-                <button
-                  onClick={() => startLiveCamera()}
-                  className="btn-emerald-primary px-3.5 py-2 text-xs font-bold flex items-center space-x-1.5 shadow-md cursor-pointer"
-                  title="Click live photo directly from camera"
-                >
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>Click Live Photo</span>
-                </button>
+        </div>
 
-                {/* Button 2: Upload Photo from Gallery/Device */}
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/30 text-xs font-bold flex items-center space-x-1.5 transition shadow-sm cursor-pointer"
-                  title="Upload photo of your room or wall from files"
-                >
-                  <Upload className="w-3.5 h-3.5 text-[#C8A96B]" />
-                  <span>Upload Room Photo</span>
-                </button>
+      </div>
 
-                {isCustomUpload && (
-                  <span className="text-[11px] text-emerald-400 font-semibold truncate max-w-[130px] sm:max-w-[180px] hidden sm:inline">
-                    ✓ {uploadFileName}
-                  </span>
-                )}
-              </div>
+      {/* Right Control & Customization Sidebar */}
+      <div className="w-full lg:w-96 bg-[#FAF7F0] dark:bg-[#1A1A1A] border-t lg:border-t-0 lg:border-l border-[#E2E0DB] dark:border-[#2E2E2E] flex flex-col justify-between overflow-y-auto p-5 space-y-5">
+        
+        <div className="space-y-5">
 
-              {/* Sample Room Presets Bar */}
-              <div className="flex items-center space-x-1.5 overflow-x-auto py-1">
-                <span className="text-[11px] text-white/60 font-semibold mr-1 hidden sm:inline">
-                  Templates:
+          {/* Room Wall Source Selection: Direct Click Camera or Upload Photo */}
+          <div className="p-4 bg-white dark:bg-[#252525] rounded-2xl border border-[#E2E0DB] dark:border-[#2E2E2E] space-y-3 shadow-xs">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-[#111111] dark:text-white flex items-center space-x-1.5">
+                <Camera className="w-3.5 h-3.5 text-[#C8A96B]" />
+                <span>Your Room Wall Photo</span>
+              </label>
+              {roomImage ? (
+                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 text-[10px] font-bold flex items-center space-x-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>Wall Photo Active</span>
                 </span>
-                {SAMPLE_ROOMS.map((room) => (
+              ) : (
+                <span className="text-[10px] text-[#858585] font-semibold">
+                  Awaiting Wall Photo
+                </span>
+              )}
+            </div>
+
+            {/* Two Main Option Cards: Click Live Photo & Upload Wall Photo */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {/* Option 1: Direct Click Photo with Camera */}
+              <button
+                onClick={() => startLiveCamera()}
+                className="p-3 rounded-xl bg-gradient-to-r from-[#111111] to-[#252525] text-white border border-[#C8A96B]/50 hover:border-[#C8A96B] hover:shadow-md transition text-left flex items-center space-x-2.5 group cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-lg bg-[#C8A96B] text-[#111111] flex items-center justify-center font-bold shrink-0 group-hover:scale-110 transition-transform">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="block font-extrabold text-xs text-white">Click Live Photo</span>
+                  <span className="block text-[10px] text-[#C8A96B]">Snap from Camera</span>
+                </div>
+              </button>
+
+              {/* Option 2: Upload Photo from Gallery/Files */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="p-3 rounded-xl bg-white dark:bg-[#1E1E1E] text-[#111111] dark:text-white border border-[#E2E0DB] dark:border-[#383838] hover:border-[#C8A96B] hover:shadow-md transition text-left flex items-center space-x-2.5 group cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-lg bg-[#FAF7F0] dark:bg-[#2A2A2A] text-[#111111] dark:text-[#C8A96B] flex items-center justify-center font-bold shrink-0 group-hover:scale-110 transition-transform">
+                  <Upload className="w-5 h-5 text-[#C8A96B]" />
+                </div>
+                <div>
+                  <span className="block font-extrabold text-xs text-[#111111] dark:text-white">Upload Room Photo</span>
+                  <span className="block text-[10px] text-[#555555] dark:text-[#858585]">Gallery or PC Files</span>
+                </div>
+              </button>
+            </div>
+
+            {/* Status info & Reset */}
+            {roomImage && (
+              <div className="pt-2 border-t border-[#E2E0DB] dark:border-[#2E2E2E] flex items-center justify-between text-xs">
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate max-w-[170px]">
+                  ✓ {uploadFileName || 'Custom Wall'}
+                </span>
+                <div className="flex items-center space-x-2">
                   <button
-                    key={room.id}
+                    onClick={() => startLiveCamera()}
+                    className="text-[11px] font-bold text-[#C8A96B] hover:underline cursor-pointer"
+                  >
+                    Retake
+                  </button>
+                  <span className="text-gray-400">•</span>
+                  <button
                     onClick={() => {
-                      setRoomImage(room.image);
+                      setRoomImage(null);
                       setIsCustomUpload(false);
                       setUploadFileName('');
                     }}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
-                      roomImage === room.image && !isCustomUpload
-                        ? 'bg-[#C8A96B] text-[#111111] font-bold shadow-sm'
-                        : 'bg-white/10 text-white/80 hover:bg-white/20'
-                    }`}
+                    className="text-[11px] font-medium text-rose-500 hover:underline cursor-pointer"
                   >
-                    {room.name}
+                    Change
                   </button>
-                ))}
+                </div>
               </div>
-
-            </div>
-
+            )}
           </div>
 
-          {/* Right Control & Customization Sidebar */}
-          <div className="w-full lg:w-96 bg-[#FAF7F0] dark:bg-[#1A1A1A] border-t lg:border-t-0 lg:border-l border-[#E2E0DB] dark:border-[#2E2E2E] flex flex-col justify-between overflow-y-auto p-5 space-y-5">
-            
-            <div className="space-y-5">
 
-              {/* Room Wall Source Selection: Direct Click Camera or Upload Photo */}
-              <div className="p-4 bg-white dark:bg-[#252525] rounded-2xl border border-[#E2E0DB] dark:border-[#2E2E2E] space-y-3 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-[#111111] dark:text-white flex items-center space-x-1.5">
-                    <Camera className="w-3.5 h-3.5 text-[#C8A96B]" />
-                    <span>Your Room Wall Photo</span>
-                  </label>
-                  {isCustomUpload ? (
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 text-[10px] font-bold flex items-center space-x-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>Custom Wall Active</span>
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-[#858585] font-semibold">
-                      Template View
-                    </span>
-                  )}
-                </div>
-
-                {/* Two Main Option Cards: Click Live Photo & Upload Wall Photo */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {/* Option 1: Direct Click Photo with Camera */}
-                  <button
-                    onClick={() => startLiveCamera()}
-                    className="p-3 rounded-xl bg-gradient-to-r from-[#111111] to-[#252525] text-white border border-[#C8A96B]/50 hover:border-[#C8A96B] hover:shadow-md transition text-left flex items-center space-x-2.5 group cursor-pointer"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-[#C8A96B] text-[#111111] flex items-center justify-center font-bold shrink-0 group-hover:scale-110 transition-transform">
-                      <Camera className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="block font-extrabold text-xs text-white">Click Live Photo</span>
-                      <span className="block text-[10px] text-[#C8A96B]">Snap from Camera</span>
-                    </div>
-                  </button>
-
-                  {/* Option 2: Upload Photo from Gallery/Files */}
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="p-3 rounded-xl bg-white dark:bg-[#1E1E1E] text-[#111111] dark:text-white border border-[#E2E0DB] dark:border-[#383838] hover:border-[#C8A96B] hover:shadow-md transition text-left flex items-center space-x-2.5 group cursor-pointer"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-[#FAF7F0] dark:bg-[#2A2A2A] text-[#111111] dark:text-[#C8A96B] flex items-center justify-center font-bold shrink-0 group-hover:scale-110 transition-transform">
-                      <Upload className="w-5 h-5 text-[#C8A96B]" />
-                    </div>
-                    <div>
-                      <span className="block font-extrabold text-xs text-[#111111] dark:text-white">Upload Room Photo</span>
-                      <span className="block text-[10px] text-[#555555] dark:text-[#858585]">Gallery or PC Files</span>
-                    </div>
-                  </button>
-                </div>
-
-                {/* Status info & Reset */}
-                {isCustomUpload ? (
-                  <div className="pt-2 border-t border-[#E2E0DB] dark:border-[#2E2E2E] flex items-center justify-between text-xs">
-                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate max-w-[170px]">
-                      ✓ {uploadFileName}
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => startLiveCamera()}
-                        className="text-[11px] font-bold text-[#C8A96B] hover:underline cursor-pointer"
-                      >
-                        Retake
-                      </button>
-                      <span className="text-gray-400">•</span>
-                      <button
-                        onClick={() => {
-                          setRoomImage(SAMPLE_ROOMS[0].image);
-                          setIsCustomUpload(false);
-                          setUploadFileName('');
-                        }}
-                        className="text-[11px] font-medium text-rose-500 hover:underline cursor-pointer"
-                      >
-                        Reset
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="pt-2 border-t border-[#E2E0DB] dark:border-[#2E2E2E] space-y-1.5">
-                    <span className="text-[10px] text-[#555555] dark:text-[#858585] font-semibold block">
-                      Or pick standard room template:
-                    </span>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {SAMPLE_ROOMS.map((room) => (
-                        <button
-                          key={room.id}
-                          onClick={() => {
-                            setRoomImage(room.image);
-                            setIsCustomUpload(false);
-                            setUploadFileName('');
-                          }}
-                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition text-left truncate cursor-pointer ${
-                            roomImage === room.image && !isCustomUpload
-                              ? 'bg-[#111111] dark:bg-[#C8A96B] text-white dark:text-[#111111] font-bold'
-                              : 'bg-[#F7F6F2] dark:bg-[#1E1E1E] text-[#555555] dark:text-[#858585] hover:text-[#111111]'
-                          }`}
-                        >
-                          {room.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              
               {/* Active Product Specs Card */}
               <div className="p-4 bg-white dark:bg-[#252525] rounded-2xl border border-[#E2E0DB] dark:border-[#2E2E2E] space-y-3 shadow-xs">
                 <div className="flex items-center justify-between">
