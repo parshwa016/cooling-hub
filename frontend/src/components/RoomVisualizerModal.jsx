@@ -43,10 +43,52 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
   const [lightingMode, setLightingMode] = useState('day'); // 'day' | 'warm' | 'night'
   const [isExporting, setIsExporting] = useState(false);
 
-  // Dragging interaction state
+  // Dragging & Resizing interaction state
   const containerRef = useRef(null);
   const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
   const dragStartOffsetRef = useRef({ x: 0, y: 0 });
+  const isResizingRef = useRef(false);
+  const resizeStartRef = useRef({ startX: 0, startScale: 1.0 });
+
+  // Corner drag-to-resize handler
+  const handleResizePointerDown = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    isResizingRef.current = true;
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    resizeStartRef.current = { startX: clientX, startScale: scale };
+
+    const handleResizeMove = (moveEvent) => {
+      if (!isResizingRef.current) return;
+      if (moveEvent.cancelable) moveEvent.preventDefault();
+      const currentX = moveEvent.clientX || (moveEvent.touches && moveEvent.touches[0].clientX);
+      const deltaX = currentX - resizeStartRef.current.startX;
+      const newScale = Math.max(0.5, Math.min(1.8, +(resizeStartRef.current.startScale + deltaX / 220).toFixed(2)));
+      setScale(newScale);
+    };
+
+    const handleResizeEnd = () => {
+      isResizingRef.current = false;
+      window.removeEventListener('mousemove', handleResizeMove);
+      window.removeEventListener('mouseup', handleResizeEnd);
+      window.removeEventListener('touchmove', handleResizeMove);
+      window.removeEventListener('touchend', handleResizeEnd);
+    };
+
+    window.addEventListener('mousemove', handleResizeMove);
+    window.addEventListener('mouseup', handleResizeEnd);
+    window.addEventListener('touchmove', handleResizeMove, { passive: false });
+    window.addEventListener('touchend', handleResizeEnd);
+  };
+
+  // Scroll wheel on AC unit to zoom/adjust size
+  const handleUnitWheel = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const delta = e.deltaY < 0 ? 0.05 : -0.05;
+    setScale((s) => Math.max(0.5, Math.min(1.8, +(s + delta).toFixed(2))));
+  };
 
   // Cleanup camera stream
   const stopLiveCamera = () => {
@@ -253,6 +295,7 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
   const handlePointerDown = (e) => {
     e.preventDefault();
     isDraggingRef.current = true;
+    setIsDragging(true);
     const clientX = e.clientX || (e.touches && e.touches[0].clientX);
     const clientY = e.clientY || (e.touches && e.touches[0].clientY);
 
@@ -292,6 +335,7 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
 
   const handlePointerUp = () => {
     isDraggingRef.current = false;
+    setIsDragging(false);
     window.removeEventListener('mousemove', handlePointerMove);
     window.removeEventListener('mouseup', handlePointerUp);
     window.removeEventListener('touchmove', handlePointerMove);
@@ -776,26 +820,35 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                     </div>
                   )}
 
-                  {/* Draggable AC Indoor Unit - Authentic Store Product Photo (Zero Shrink on drag) */}
+                  {/* Draggable AC Indoor Unit - Fixed Pixel Width (Zero Shrink across wall) */}
                   <div
                     onMouseDown={handlePointerDown}
                     onTouchStart={handlePointerDown}
-                    className="absolute z-20 cursor-grab active:cursor-grabbing transition-transform group select-none touch-none w-max max-w-none"
+                    onWheel={handleUnitWheel}
+                    className={`absolute z-20 cursor-grab active:cursor-grabbing group select-none touch-none ${
+                      isDragging ? '' : 'transition-transform duration-100'
+                    }`}
                     style={{
                       left: `${position.x}%`,
                       top: `${position.y}%`,
+                      width: `${currentProduct?.is_window ? 320 : 440}px`,
+                      minWidth: `${currentProduct?.is_window ? 320 : 440}px`,
+                      maxWidth: `${currentProduct?.is_window ? 320 : 440}px`,
                       transform: `translate(-50%, -50%) scale(${scale})`,
                       touchAction: 'none'
                     }}
                   >
-                    {/* Realistic Wall Mounted AC Unit (No white background container, fixed size) */}
-                    <div className="relative select-none filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)] w-max max-w-none">
-                      
+                    {/* Realistic Wall Mounted AC Unit (No white background container, strictly fixed width) */}
+                    <div 
+                      className="relative select-none filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)]"
+                      style={{ width: '100%', minWidth: '100%', maxWidth: '100%' }}
+                    >
                       {/* Studio-Grade Transparent Cutout AC Image */}
                       <img 
                         src={getProductTransparentImage(currentProduct)} 
                         alt={currentProduct.title}
-                        className="w-[300px] sm:w-[400px] md:w-[480px] max-w-none h-auto object-contain select-none pointer-events-none block"
+                        className="h-auto object-contain select-none pointer-events-none block"
+                        style={{ width: '100%', minWidth: '100%', maxWidth: '100%' }}
                         onError={(e) => { 
                           e.target.src = currentProduct.image || '/images/products/daikin_split.png'; 
                         }}
@@ -817,8 +870,8 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                         </div>
                       )}
 
-                      {/* Drag Move Handle Pill on Hover with On-Unit Size Buttons */}
-                      <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition shadow-xl pointer-events-auto whitespace-nowrap border border-white/15">
+                      {/* Interactive Drag & Size Adjustment Toolbar (Visible on Hover / Focus) */}
+                      <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition shadow-xl pointer-events-auto whitespace-nowrap border border-[#C8A96B]/40">
                         <div className="flex items-center space-x-1 text-[#C8A96B]">
                           <Move className="w-3 h-3" />
                           <span>Drag to reposition</span>
@@ -827,23 +880,33 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                         <div className="flex items-center space-x-1">
                           <span className="text-white/80">Size:</span>
                           <button
-                            onClick={(e) => { e.stopPropagation(); setScale((s) => Math.max(0.6, +(s - 0.1).toFixed(1))); }}
+                            onClick={(e) => { e.stopPropagation(); setScale((s) => Math.max(0.5, +(s - 0.05).toFixed(2))); }}
                             className="w-4 h-4 rounded bg-white/20 hover:bg-[#C8A96B] hover:text-black flex items-center justify-center font-bold text-xs transition cursor-pointer"
-                            title="Smaller"
+                            title="Smaller (-5%)"
                           >
                             −
                           </button>
-                          <span className="font-mono text-[#C8A96B] min-w-[28px] text-center">
+                          <span className="font-mono text-[#C8A96B] min-w-[32px] text-center">
                             {Math.round(scale * 100)}%
                           </span>
                           <button
-                            onClick={(e) => { e.stopPropagation(); setScale((s) => Math.min(1.6, +(s + 0.1).toFixed(1))); }}
+                            onClick={(e) => { e.stopPropagation(); setScale((s) => Math.min(1.8, +(s + 0.05).toFixed(2))); }}
                             className="w-4 h-4 rounded bg-white/20 hover:bg-[#C8A96B] hover:text-black flex items-center justify-center font-bold text-xs transition cursor-pointer"
-                            title="Larger"
+                            title="Larger (+5%)"
                           >
                             +
                           </button>
                         </div>
+                      </div>
+
+                      {/* Golden Corner Resize Handle on Bottom-Right */}
+                      <div
+                        onMouseDown={handleResizePointerDown}
+                        onTouchStart={handleResizePointerDown}
+                        className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full bg-[#C8A96B] hover:bg-[#e0c388] border-2 border-white shadow-xl cursor-nwse-resize flex items-center justify-center transition-transform hover:scale-125 z-30 pointer-events-auto"
+                        title="Drag corner to adjust AC sticker size"
+                      >
+                        <SlidersHorizontal className="w-3 h-3 text-black" />
                       </div>
                     </div>
 
