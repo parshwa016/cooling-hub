@@ -599,11 +599,33 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                 <span className="font-bold text-white">₹{currentProduct.price.toLocaleString()}</span>
               </div>
 
-              {/* Quick Canvas Helpers */}
-              <div className="pointer-events-auto flex items-center space-x-1.5 bg-black/75 backdrop-blur-md p-1 rounded-2xl border border-white/20 shadow-lg">
+              {/* Quick Canvas Helpers & On-Canvas Size Controls */}
+              <div className="pointer-events-auto flex items-center space-x-1.5 bg-black/80 backdrop-blur-md p-1 rounded-2xl border border-white/20 shadow-lg">
+                {/* On-Canvas Size Adjuster */}
+                <div className="flex items-center space-x-1 px-1.5 py-0.5 bg-white/10 rounded-xl">
+                  <span className="text-[10px] font-bold text-[#C8A96B] hidden sm:inline">Size:</span>
+                  <button
+                    onClick={() => setScale((s) => Math.max(0.6, +(s - 0.1).toFixed(1)))}
+                    className="w-5 h-5 rounded bg-black/40 hover:bg-[#C8A96B] hover:text-black text-white flex items-center justify-center font-bold text-xs transition cursor-pointer"
+                    title="Make AC Smaller (-10%)"
+                  >
+                    −
+                  </button>
+                  <span className="font-mono font-bold text-[11px] text-white px-1 min-w-[34px] text-center">
+                    {Math.round(scale * 100)}%
+                  </span>
+                  <button
+                    onClick={() => setScale((s) => Math.min(1.6, +(s + 0.1).toFixed(1)))}
+                    className="w-5 h-5 rounded bg-black/40 hover:bg-[#C8A96B] hover:text-black text-white flex items-center justify-center font-bold text-xs transition cursor-pointer"
+                    title="Make AC Larger (+10%)"
+                  >
+                    +
+                  </button>
+                </div>
+
                 <button
                   onClick={() => setAirflowEnabled(!airflowEnabled)}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center space-x-1 transition ${
+                  className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center space-x-1 transition cursor-pointer ${
                     airflowEnabled 
                       ? 'bg-[#C8A96B] text-[#111111]' 
                       : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -616,7 +638,7 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
 
                 <button
                   onClick={() => setShowClearanceGuides(!showClearanceGuides)}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center space-x-1 transition ${
+                  className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center space-x-1 transition cursor-pointer ${
                     showClearanceGuides 
                       ? 'bg-white/25 text-white' 
                       : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -629,7 +651,7 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
 
                 <button
                   onClick={handleResetPosition}
-                  className="p-1.5 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition"
+                  className="p-1.5 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
                   title="Reset Position to Center"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -754,11 +776,11 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                     </div>
                   )}
 
-                  {/* Draggable AC Indoor Unit - Authentic Store Product Photo */}
+                  {/* Draggable AC Indoor Unit - Authentic Store Product Photo (Zero Shrink on drag) */}
                   <div
                     onMouseDown={handlePointerDown}
                     onTouchStart={handlePointerDown}
-                    className="absolute z-20 cursor-grab active:cursor-grabbing transition-transform group"
+                    className="absolute z-20 cursor-grab active:cursor-grabbing transition-transform group select-none touch-none w-max max-w-none"
                     style={{
                       left: `${position.x}%`,
                       top: `${position.y}%`,
@@ -766,14 +788,14 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                       touchAction: 'none'
                     }}
                   >
-                    {/* Realistic Wall Mounted AC Unit (No white background container) */}
-                    <div className="relative select-none filter drop-shadow-[0_20px_30px_rgba(0,0,0,0.65)]">
+                    {/* Realistic Wall Mounted AC Unit (No white background container, fixed size) */}
+                    <div className="relative select-none filter drop-shadow-[0_20px_35px_rgba(0,0,0,0.65)] w-max max-w-none">
                       
-                      {/* Transparent Cutout AC Image (Only the AC body, zero white margins) */}
+                      {/* Studio-Grade Transparent Cutout AC Image */}
                       <img 
                         src={getProductTransparentImage(currentProduct)} 
                         alt={currentProduct.title}
-                        className="w-[280px] sm:w-[390px] md:w-[460px] h-auto object-contain select-none pointer-events-none block"
+                        className="w-[300px] sm:w-[400px] md:w-[480px] max-w-none h-auto object-contain select-none pointer-events-none block"
                         onError={(e) => { 
                           e.target.src = currentProduct.image || '/images/products/daikin_split.png'; 
                         }}
@@ -786,17 +808,42 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                       </div>
 
                       {/* Concealed Realistic Digital Temperature LED Glow on the unit */}
-                      <div className="absolute bottom-2.5 right-4 sm:right-6 px-2 py-0.5 rounded-md bg-[#0F172A]/85 backdrop-blur-xs border border-[#334155]/60 shadow-inner flex items-center space-x-1 pointer-events-none">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="font-mono font-bold text-xs sm:text-sm text-emerald-400 tracking-wider">
-                          {temperature}°C
-                        </span>
-                      </div>
+                      {!currentProduct.is_window && (
+                        <div className="absolute bottom-3 right-5 sm:right-7 px-2 py-0.5 rounded-md bg-[#0F172A]/85 backdrop-blur-xs border border-[#334155]/60 shadow-inner flex items-center space-x-1 pointer-events-none">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="font-mono font-bold text-xs sm:text-sm text-emerald-400 tracking-wider">
+                            {temperature}°C
+                          </span>
+                        </div>
+                      )}
 
-                      {/* Drag Move Handle Pill on Hover */}
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/85 backdrop-blur-md text-[#C8A96B] px-3 py-1 rounded-full text-[10px] font-bold flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none whitespace-nowrap">
-                        <Move className="w-3 h-3" />
-                        <span>Drag anywhere on wall</span>
+                      {/* Drag Move Handle Pill on Hover with On-Unit Size Buttons */}
+                      <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition shadow-xl pointer-events-auto whitespace-nowrap border border-white/15">
+                        <div className="flex items-center space-x-1 text-[#C8A96B]">
+                          <Move className="w-3 h-3" />
+                          <span>Drag to reposition</span>
+                        </div>
+                        <span className="text-white/40">|</span>
+                        <div className="flex items-center space-x-1">
+                          <span className="text-white/80">Size:</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setScale((s) => Math.max(0.6, +(s - 0.1).toFixed(1))); }}
+                            className="w-4 h-4 rounded bg-white/20 hover:bg-[#C8A96B] hover:text-black flex items-center justify-center font-bold text-xs transition cursor-pointer"
+                            title="Smaller"
+                          >
+                            −
+                          </button>
+                          <span className="font-mono text-[#C8A96B] min-w-[28px] text-center">
+                            {Math.round(scale * 100)}%
+                          </span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setScale((s) => Math.min(1.6, +(s + 0.1).toFixed(1))); }}
+                            className="w-4 h-4 rounded bg-white/20 hover:bg-[#C8A96B] hover:text-black flex items-center justify-center font-bold text-xs transition cursor-pointer"
+                            title="Larger"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -1032,38 +1079,77 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                 </div>
               </div>
 
-              {/* Wall Size & Dimension Adjustments */}
-              <div className="space-y-3 p-4 bg-white dark:bg-[#252525] rounded-2xl border border-[#E2E0DB] dark:border-[#2E2E2E]">
+              {/* Wall Size & Dimension Adjustments (Model Size Option) */}
+              <div className="space-y-3 p-4 bg-white dark:bg-[#252525] rounded-2xl border border-[#E2E0DB] dark:border-[#2E2E2E] shadow-xs">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-[#111111] dark:text-white flex items-center space-x-1.5">
                     <SlidersHorizontal className="w-3.5 h-3.5 text-[#C8A96B]" />
-                    <span>AC Scale / Wall Distance</span>
+                    <span>AC Model Size (Wall Scale)</span>
                   </label>
-                  <span className="text-xs font-mono font-bold text-[#C8A96B]">
+                  <span className="text-xs font-mono font-bold text-[#C8A96B] bg-[#C8A96B]/15 px-2 py-0.5 rounded-md">
                     {Math.round(scale * 100)}%
                   </span>
                 </div>
 
-                <input
-                  type="range"
-                  min="0.6"
-                  max="1.5"
-                  step="0.05"
-                  value={scale}
-                  onChange={(e) => setScale(parseFloat(e.target.value))}
-                  className="w-full accent-[#C8A96B] cursor-pointer"
-                />
+                {/* Quick Model Size Presets */}
+                <div className="grid grid-cols-4 gap-1.5 pt-1">
+                  {[
+                    { label: 'Compact', val: 0.75 },
+                    { label: 'Normal', val: 1.0 },
+                    { label: 'Large', val: 1.25 },
+                    { label: 'XL View', val: 1.5 }
+                  ].map((p) => (
+                    <button
+                      key={p.label}
+                      onClick={() => setScale(p.val)}
+                      className={`py-1.5 rounded-xl text-[11px] font-bold transition text-center cursor-pointer ${
+                        Math.abs(scale - p.val) < 0.05
+                          ? 'bg-[#111111] dark:bg-[#C8A96B] text-white dark:text-[#111111] shadow-sm'
+                          : 'bg-[#F7F6F2] dark:bg-[#1E1E1E] text-[#555555] dark:text-[#858585] hover:bg-[#E2E0DB]'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Stepper buttons and slider */}
+                <div className="flex items-center space-x-2 pt-1">
+                  <button
+                    onClick={() => setScale((s) => Math.max(0.6, +(s - 0.05).toFixed(2)))}
+                    className="w-7 h-7 rounded-lg bg-[#F7F6F2] dark:bg-[#1E1E1E] hover:bg-[#E2E0DB] flex items-center justify-center font-bold text-sm text-[#111111] dark:text-white transition cursor-pointer"
+                    title="Shrink (-5%)"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="range"
+                    min="0.6"
+                    max="1.6"
+                    step="0.05"
+                    value={scale}
+                    onChange={(e) => setScale(parseFloat(e.target.value))}
+                    className="flex-1 accent-[#C8A96B] cursor-pointer"
+                  />
+                  <button
+                    onClick={() => setScale((s) => Math.min(1.6, +(s + 0.05).toFixed(2)))}
+                    className="w-7 h-7 rounded-lg bg-[#F7F6F2] dark:bg-[#1E1E1E] hover:bg-[#E2E0DB] flex items-center justify-center font-bold text-sm text-[#111111] dark:text-white transition cursor-pointer"
+                    title="Enlarge (+5%)"
+                  >
+                    +
+                  </button>
+                </div>
 
                 <div className="flex items-center justify-between text-[11px] text-[#555555] dark:text-[#858585]">
                   <span>Far Wall (Smaller)</span>
-                  <span>Close Wall (Larger)</span>
+                  <span>Close-Up Wall (Larger)</span>
                 </div>
 
                 {/* Real-world dimension reference */}
                 <div className="pt-2 border-t border-[#E2E0DB] dark:border-[#2E2E2E] flex items-center justify-between text-[11px]">
                   <span className="text-[#555555]">Real Dimensions:</span>
                   <span className="font-bold text-[#111111] dark:text-white">
-                    88 cm (W) × 29 cm (H) × 21 cm (D)
+                    {currentProduct.is_window ? '66 cm (W) × 43 cm (H) × 70 cm (D)' : '88 cm (W) × 29 cm (H) × 21 cm (D)'}
                   </span>
                 </div>
               </div>
