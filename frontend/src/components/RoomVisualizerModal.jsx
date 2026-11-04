@@ -3,7 +3,8 @@ import {
   X, Upload, Camera, Wind, Zap, ShoppingCart, 
   Download, RotateCcw, Share2, Sparkles, Check, 
   Eye, Move, SlidersHorizontal, Sun, Moon, Info,
-  ChevronLeft, ChevronRight, PhoneCall
+  ChevronLeft, ChevronRight, PhoneCall, RefreshCw,
+  CheckCircle2, AlertCircle, Image as ImageIcon
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
@@ -54,6 +55,14 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
   const [uploadFileName, setUploadFileName] = useState('');
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+
+  // Live Camera Viewfinder state
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState('environment'); // 'environment' | 'user'
+  const [cameraLoading, setCameraLoading] = useState(false);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
 
   // AC Placement state (percentages of wall container 0-100)
   const [position, setPosition] = useState({ x: 50, y: 22 });
@@ -70,6 +79,117 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
   const containerRef = useRef(null);
   const isDraggingRef = useRef(false);
   const dragStartOffsetRef = useRef({ x: 0, y: 0 });
+
+  // Cleanup camera stream
+  const stopLiveCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => {
+        try { track.stop(); } catch (e) { /* ignore */ }
+      });
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+    setCameraLoading(false);
+  };
+
+  const handleClose = () => {
+    stopLiveCamera();
+    onClose();
+  };
+
+  useEffect(() => {
+    return () => {
+      stopLiveCamera();
+    };
+  }, []);
+
+  // Live Camera stream initiator
+  const startLiveCamera = async (facing = cameraFacing) => {
+    stopLiveCamera();
+    setIsCameraActive(true);
+    setCameraLoading(true);
+    setCameraFacing(facing);
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera streaming not supported by browser.');
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: facing },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      });
+
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(() => {});
+      }
+      setCameraLoading(false);
+    } catch (err) {
+      console.warn("Live camera stream error, attempting direct camera input fallback:", err);
+      setCameraLoading(false);
+      setIsCameraActive(false);
+
+      // Automatic fallback to native camera file input
+      if (cameraInputRef.current) {
+        cameraInputRef.current.click();
+      } else {
+        showToast({
+          type: 'warning',
+          title: 'Camera Access Needed',
+          message: 'Could not access live camera. You can upload a photo of your wall directly.'
+        });
+      }
+    }
+  };
+
+  // Re-attach video stream if active and video element mounts
+  useEffect(() => {
+    if (isCameraActive && streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [isCameraActive]);
+
+  // Click shutter to capture photo from live video stream
+  const captureLivePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const width = video.videoWidth || 1280;
+    const height = video.videoHeight || 720;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, width, height);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    setRoomImage(dataUrl);
+    setIsCustomUpload(true);
+    setUploadFileName(`Live_Wall_${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.jpg`);
+    stopLiveCamera();
+
+    showToast({
+      type: 'success',
+      title: 'Wall Photo Captured!',
+      message: 'Your live room photo is now set! Drag the AC to preview fit & airflow.'
+    });
+  };
+
+  // Switch between front/rear camera
+  const toggleCameraFacing = () => {
+    const nextFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+    startLiveCamera(nextFacing);
+  };
 
   // Load products if not provided
   useEffect(() => {
@@ -111,6 +231,7 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
     const file = e.target.files?.[0];
     if (file) {
       processUploadedFile(file);
+      e.target.value = '';
     }
   };
 
@@ -123,10 +244,11 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
     reader.onload = (event) => {
       setRoomImage(event.target.result);
       setIsCustomUpload(true);
-      setUploadFileName(file.name);
+      setUploadFileName(file.name || 'Custom_Room_Wall.jpg');
+      stopLiveCamera();
       showToast({ 
         type: 'success', 
-        title: 'Wall Photo Uploaded', 
+        title: 'Wall Photo Ready', 
         message: 'Your room photo is ready! Drag the AC anywhere to find the perfect wall fit.' 
       });
     };
@@ -394,7 +516,7 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
 
           <div className="flex items-center space-x-2">
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 rounded-xl text-[#555555] hover:text-[#111111] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition"
               title="Close Visualizer"
             >
@@ -409,7 +531,99 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
           {/* Main Visualizer Stage */}
           <div className="flex-1 flex flex-col bg-[#0F0F0F] relative min-h-[380px] sm:min-h-[460px] lg:min-h-[520px] select-none overflow-hidden">
             
-            {/* Top Canvas Action Overlay Bar */}
+            {isCameraActive ? (
+              /* LIVE CAMERA VIEWFINDER OVERLAY */
+              <div className="flex-1 relative w-full h-full overflow-hidden bg-black flex items-center justify-center">
+                {/* Live Video Stream from Camera */}
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                />
+
+                {/* Camera Connecting Indicator */}
+                {cameraLoading && (
+                  <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center space-y-3 z-30">
+                    <div className="w-10 h-10 border-3 border-[#C8A96B] border-t-transparent rounded-full animate-spin" />
+                    <p className="text-white text-xs font-bold">Connecting to camera...</p>
+                  </div>
+                )}
+
+                {/* Live Viewfinder Alignment Overlay */}
+                <div className="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-4 sm:p-6">
+                  
+                  {/* Top Banner */}
+                  <div className="flex items-center justify-between pointer-events-auto">
+                    <div className="bg-black/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-white text-xs font-semibold flex items-center space-x-2 shadow-lg">
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                      <span className="font-bold">Live Wall Viewfinder</span>
+                      <span className="text-white/40">|</span>
+                      <span className="text-[#C8A96B] text-[11px]">Frame your room wall</span>
+                    </div>
+
+                    <button
+                      onClick={stopLiveCamera}
+                      className="p-2 rounded-full bg-black/70 hover:bg-black text-white border border-white/20 transition shadow-lg cursor-pointer"
+                      title="Exit Camera View"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Target Framing Box for AC Placement */}
+                  <div className="w-11/12 max-w-lg mx-auto h-36 sm:h-44 rounded-2xl border-2 border-dashed border-[#C8A96B] flex flex-col items-center justify-center bg-[#C8A96B]/15 backdrop-blur-xs text-center p-3">
+                    <Camera className="w-8 h-8 text-[#C8A96B] mb-1.5 animate-bounce" />
+                    <span className="text-white text-xs sm:text-sm font-extrabold drop-shadow-md">
+                      Aim camera directly at your room wall
+                    </span>
+                    <span className="text-[11px] text-[#C8A96B] font-medium mt-0.5">
+                      Tap the gold shutter button below to click & use immediately
+                    </span>
+                  </div>
+
+                  {/* Bottom Controls: Flip, Snap, or Native Camera */}
+                  <div className="flex items-center justify-center space-x-5 pointer-events-auto pb-2">
+                    {/* Flip Camera */}
+                    <button
+                      onClick={toggleCameraFacing}
+                      className="p-3.5 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/30 transition shadow-lg cursor-pointer"
+                      title="Switch Front / Rear Camera"
+                    >
+                      <RefreshCw className="w-5 h-5" />
+                    </button>
+
+                    {/* Large Shutter Button */}
+                    <button
+                      onClick={captureLivePhoto}
+                      disabled={cameraLoading}
+                      className="w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-[#C8A96B] hover:bg-[#d8bb7f] border-4 border-white shadow-[0_0_35px_rgba(200,169,107,0.7)] flex items-center justify-center active:scale-95 transition-all group cursor-pointer"
+                      title="Click to Snap & Use Wall Photo"
+                    >
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-[#111111]/30 flex items-center justify-center">
+                        <Camera className="w-7 h-7 sm:w-8 sm:h-8 text-[#111111] group-hover:scale-110 transition-transform" />
+                      </div>
+                    </button>
+
+                    {/* Alternative: Device Native Camera */}
+                    <button
+                      onClick={() => {
+                        stopLiveCamera();
+                        cameraInputRef.current?.click();
+                      }}
+                      className="px-3.5 py-3 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/30 text-xs font-bold transition shadow-lg flex items-center space-x-1.5 cursor-pointer"
+                      title="Open Device Native Camera"
+                    >
+                      <span>Phone Cam</span>
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Top Canvas Action Overlay Bar */}
             <div className="absolute top-3 left-3 right-3 z-30 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
               
               {/* Active Product Pill */}
@@ -665,13 +879,16 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                 </div>
               )}
 
-            </div>
+                </div>
+              </>
+            )}
 
-            {/* Bottom Floating Bar on Canvas: Upload Photo CTA & Sample Room Switcher */}
+            {/* Bottom Floating Bar on Canvas: Direct Click Camera & Upload Photo CTAs + Presets */}
             <div className="p-3 bg-black/85 backdrop-blur-md border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-white z-30">
               
-              {/* Photo Upload Triggers */}
+              {/* Photo Input Actions */}
               <div className="flex items-center space-x-2">
+                {/* Hidden file input for Photo Upload (Gallery / Files) */}
                 <input 
                   type="file" 
                   ref={fileInputRef} 
@@ -679,17 +896,39 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                   accept="image/*" 
                   className="hidden" 
                 />
+
+                {/* Hidden file input for Direct Native Camera Capture */}
+                <input 
+                  type="file" 
+                  ref={cameraInputRef} 
+                  onChange={handleFileChange} 
+                  accept="image/*" 
+                  capture="environment" 
+                  className="hidden" 
+                />
                 
+                {/* Button 1: Click Live Photo with Camera */}
+                <button
+                  onClick={() => startLiveCamera()}
+                  className="btn-emerald-primary px-3.5 py-2 text-xs font-bold flex items-center space-x-1.5 shadow-md cursor-pointer"
+                  title="Click live photo directly from camera"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Click Live Photo</span>
+                </button>
+
+                {/* Button 2: Upload Photo from Gallery/Device */}
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="btn-emerald-primary px-3.5 py-2 text-xs font-bold flex items-center space-x-1.5 shadow-md"
+                  className="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/30 text-xs font-bold flex items-center space-x-1.5 transition shadow-sm cursor-pointer"
+                  title="Upload photo of your room or wall from files"
                 >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Upload Your Wall Photo</span>
+                  <Upload className="w-3.5 h-3.5 text-[#C8A96B]" />
+                  <span>Upload Room Photo</span>
                 </button>
 
                 {isCustomUpload && (
-                  <span className="text-[11px] text-emerald-400 font-semibold truncate max-w-[140px] sm:max-w-[200px]">
+                  <span className="text-[11px] text-emerald-400 font-semibold truncate max-w-[130px] sm:max-w-[180px] hidden sm:inline">
                     ✓ {uploadFileName}
                   </span>
                 )}
@@ -698,7 +937,7 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
               {/* Sample Room Presets Bar */}
               <div className="flex items-center space-x-1.5 overflow-x-auto py-1">
                 <span className="text-[11px] text-white/60 font-semibold mr-1 hidden sm:inline">
-                  Or pick template:
+                  Templates:
                 </span>
                 {SAMPLE_ROOMS.map((room) => (
                   <button
@@ -708,8 +947,8 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
                       setIsCustomUpload(false);
                       setUploadFileName('');
                     }}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
-                      roomImage === room.image
+                    className={`px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+                      roomImage === room.image && !isCustomUpload
                         ? 'bg-[#C8A96B] text-[#111111] font-bold shadow-sm'
                         : 'bg-white/10 text-white/80 hover:bg-white/20'
                     }`}
@@ -727,6 +966,110 @@ export default function RoomVisualizerModal({ isOpen, onClose, initialProduct = 
           <div className="w-full lg:w-96 bg-[#FAF7F0] dark:bg-[#1A1A1A] border-t lg:border-t-0 lg:border-l border-[#E2E0DB] dark:border-[#2E2E2E] flex flex-col justify-between overflow-y-auto p-5 space-y-5">
             
             <div className="space-y-5">
+
+              {/* Room Wall Source Selection: Direct Click Camera or Upload Photo */}
+              <div className="p-4 bg-white dark:bg-[#252525] rounded-2xl border border-[#E2E0DB] dark:border-[#2E2E2E] space-y-3 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#111111] dark:text-white flex items-center space-x-1.5">
+                    <Camera className="w-3.5 h-3.5 text-[#C8A96B]" />
+                    <span>Your Room Wall Photo</span>
+                  </label>
+                  {isCustomUpload ? (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 text-[10px] font-bold flex items-center space-x-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>Custom Wall Active</span>
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-[#858585] font-semibold">
+                      Template View
+                    </span>
+                  )}
+                </div>
+
+                {/* Two Main Option Cards: Click Live Photo & Upload Wall Photo */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {/* Option 1: Direct Click Photo with Camera */}
+                  <button
+                    onClick={() => startLiveCamera()}
+                    className="p-3 rounded-xl bg-gradient-to-r from-[#111111] to-[#252525] text-white border border-[#C8A96B]/50 hover:border-[#C8A96B] hover:shadow-md transition text-left flex items-center space-x-2.5 group cursor-pointer"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-[#C8A96B] text-[#111111] flex items-center justify-center font-bold shrink-0 group-hover:scale-110 transition-transform">
+                      <Camera className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="block font-extrabold text-xs text-white">Click Live Photo</span>
+                      <span className="block text-[10px] text-[#C8A96B]">Snap from Camera</span>
+                    </div>
+                  </button>
+
+                  {/* Option 2: Upload Photo from Gallery/Files */}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-3 rounded-xl bg-white dark:bg-[#1E1E1E] text-[#111111] dark:text-white border border-[#E2E0DB] dark:border-[#383838] hover:border-[#C8A96B] hover:shadow-md transition text-left flex items-center space-x-2.5 group cursor-pointer"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-[#FAF7F0] dark:bg-[#2A2A2A] text-[#111111] dark:text-[#C8A96B] flex items-center justify-center font-bold shrink-0 group-hover:scale-110 transition-transform">
+                      <Upload className="w-5 h-5 text-[#C8A96B]" />
+                    </div>
+                    <div>
+                      <span className="block font-extrabold text-xs text-[#111111] dark:text-white">Upload Room Photo</span>
+                      <span className="block text-[10px] text-[#555555] dark:text-[#858585]">Gallery or PC Files</span>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Status info & Reset */}
+                {isCustomUpload ? (
+                  <div className="pt-2 border-t border-[#E2E0DB] dark:border-[#2E2E2E] flex items-center justify-between text-xs">
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate max-w-[170px]">
+                      ✓ {uploadFileName}
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => startLiveCamera()}
+                        className="text-[11px] font-bold text-[#C8A96B] hover:underline cursor-pointer"
+                      >
+                        Retake
+                      </button>
+                      <span className="text-gray-400">•</span>
+                      <button
+                        onClick={() => {
+                          setRoomImage(SAMPLE_ROOMS[0].image);
+                          setIsCustomUpload(false);
+                          setUploadFileName('');
+                        }}
+                        className="text-[11px] font-medium text-rose-500 hover:underline cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="pt-2 border-t border-[#E2E0DB] dark:border-[#2E2E2E] space-y-1.5">
+                    <span className="text-[10px] text-[#555555] dark:text-[#858585] font-semibold block">
+                      Or pick standard room template:
+                    </span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {SAMPLE_ROOMS.map((room) => (
+                        <button
+                          key={room.id}
+                          onClick={() => {
+                            setRoomImage(room.image);
+                            setIsCustomUpload(false);
+                            setUploadFileName('');
+                          }}
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition text-left truncate cursor-pointer ${
+                            roomImage === room.image && !isCustomUpload
+                              ? 'bg-[#111111] dark:bg-[#C8A96B] text-white dark:text-[#111111] font-bold'
+                              : 'bg-[#F7F6F2] dark:bg-[#1E1E1E] text-[#555555] dark:text-[#858585] hover:text-[#111111]'
+                          }`}
+                        >
+                          {room.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               
               {/* Active Product Specs Card */}
               <div className="p-4 bg-white dark:bg-[#252525] rounded-2xl border border-[#E2E0DB] dark:border-[#2E2E2E] space-y-3 shadow-xs">

@@ -473,14 +473,14 @@ export default function ProductDetail({ productId, setActiveTab }) {
               <div className="text-left">
                 <div className="flex items-center space-x-2">
                   <span className="font-extrabold text-sm sm:text-base text-white">
-                    Visualize In Your Room
+                    Try in Your Room (AR Visualizer)
                   </span>
                   <span className="px-2 py-0.5 rounded-full bg-[#C8A96B] text-[#111111] text-[10px] font-black uppercase tracking-wider">
-                    AR Wall Preview
+                    Upload or Click Photo
                   </span>
                 </div>
                 <p className="text-xs text-[#C8A96B] font-medium mt-0.5">
-                  Upload your room photo to preview fit, scale & cold airflow
+                  Upload your room photo or click live photo with camera to preview fit, scale & airflow
                 </p>
               </div>
             </div>
